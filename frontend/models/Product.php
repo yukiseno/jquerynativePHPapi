@@ -38,6 +38,20 @@ class Product
     }
 
     /**
+     * Get single product by slug
+     */
+    public static function findBySlug($slug)
+    {
+        $response = self::$api->get('/product/' . urlencode($slug) . '/slug');
+
+        if (!$response['success']) {
+            return null;
+        }
+
+        return $response['data'];
+    }
+
+    /**
      * Filter products by color
      */
     public static function filterByColor($colorId)
