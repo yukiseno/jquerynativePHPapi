@@ -260,3 +260,40 @@ body {
 .color-circle:hover {
   transform: scale(1.15);
 }
+
+/* Product Detail Page Styles */
+.product-detail-image {
+  max-height: 500px;
+  object-fit: cover;
+  border: 1px solid #e0e0e0;
+}
+
+.size-btn {
+  min-width: 60px;
+  padding: 10px 15px;
+  transition: all 0.3s;
+}
+
+.size-btn.active {
+  background-color: #667eea !important;
+  color: white !important;
+  border-color: #667eea !important;
+}
+
+.size-btn:hover {
+  border-color: #667eea;
+}
+
+.color-btn {
+  border: 2px solid #ddd;
+  transition: all 0.3s;
+  cursor: pointer;
+}
+
+.color-btn:hover {
+  transform: scale(1.1);
+}
+
+.color-btn.active {
+  border-color: #667eea !important;
+}
