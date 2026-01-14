@@ -110,3 +110,15 @@ $statusClass = $product['status'] == 1 ? 'bg-success' : 'bg-danger';
         </div>
     </div>
 </div>
+
+<!-- Set product data for JavaScript -->
+<script>
+    currentProduct = {
+        id: <?= (int)$product['id'] ?>,
+        name: <?= json_encode($product['name']) ?>,
+        slug: <?= json_encode($product['slug'] ?? '') ?>,
+        price: <?= (int)$product['price'] ?>,
+        thumbnail: <?= json_encode($product['thumbnail']) ?>,
+        status: <?= (int)$product['status'] ?>
+    };
+</script>

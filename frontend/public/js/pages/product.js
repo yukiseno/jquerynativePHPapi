@@ -3,9 +3,10 @@
  * Product detail, color/size selection, and add to cart functionality
  */
 
-let selectedColor = null;
-let selectedSize = null;
-let currentProduct = null;
+// Global variables (set from PHP in the view)
+currentProduct = currentProduct || null;
+selectedColor = null;
+selectedSize = null;
 
 // Select size
 function selectSize(sizeId, sizeName, btn) {
@@ -56,8 +57,11 @@ function addProductToCart() {
     name: currentProduct.name,
     price: currentProduct.price,
     thumbnail: currentProduct.thumbnail,
-    color: selectedColor,
-    size: selectedSize,
+    slug: currentProduct.slug,
+    colorId: selectedColor.id,
+    colorName: selectedColor.name,
+    sizeId: selectedSize.id,
+    sizeName: selectedSize.name,
     quantity: quantity,
   };
 
@@ -67,8 +71,8 @@ function addProductToCart() {
   const existingIndex = cart.findIndex(
     (item) =>
       item.id === cartItem.id &&
-      item.color.id === cartItem.color.id &&
-      item.size.id === cartItem.size.id
+      item.colorId === cartItem.colorId &&
+      item.sizeId === cartItem.sizeId
   );
 
   if (existingIndex >= 0) {
@@ -98,16 +102,7 @@ function addProductToCart() {
 
 // Initialize on page load
 document.addEventListener("DOMContentLoaded", function () {
-  // Store product data from the view
-  const productName = document.getElementById("productName")?.textContent;
-  const productPrice = document.getElementById("productPrice")?.textContent;
-  const productImage = document.getElementById("productImage")?.src;
-
-  currentProduct = {
-    name: productName,
-    price: parseInt(productPrice.replace("$", "")) * 100,
-    thumbnail: productImage,
-  };
+  // currentProduct is set from PHP in the view
 
   // Add quantity change listener
   document
