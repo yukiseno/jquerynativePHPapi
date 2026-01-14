@@ -55,25 +55,21 @@ function updateAuthNav() {
     const loginNav = document.getElementById("loginNav");
     const registerNav = document.getElementById("registerNav");
     const profileNav = document.getElementById("profileNav");
-    const ordersNav = document.getElementById("ordersNav");
     const logoutNav = document.getElementById("logoutNav");
 
     if (loginNav) loginNav.style.display = "none";
     if (registerNav) registerNav.style.display = "none";
     if (profileNav) profileNav.style.display = "block";
-    if (ordersNav) ordersNav.style.display = "block";
     if (logoutNav) logoutNav.style.display = "block";
   } else {
     const loginNav = document.getElementById("loginNav");
     const registerNav = document.getElementById("registerNav");
     const profileNav = document.getElementById("profileNav");
-    const ordersNav = document.getElementById("ordersNav");
     const logoutNav = document.getElementById("logoutNav");
 
     if (loginNav) loginNav.style.display = "block";
     if (registerNav) registerNav.style.display = "block";
     if (profileNav) profileNav.style.display = "none";
-    if (ordersNav) ordersNav.style.display = "none";
     if (logoutNav) logoutNav.style.display = "none";
   }
 }
@@ -81,9 +77,18 @@ function updateAuthNav() {
 function logout() {
   localStorage.removeItem("authToken");
   localStorage.removeItem("authUser");
-  updateAuthNav();
-  updateCartCount();
-  window.location.href = window.BASE_URL + "/";
+
+  // Clear PHP session
+  $.ajax({
+    url: window.BASE_URL + "/api.php",
+    type: "POST",
+    data: { action: "clear_session" },
+    complete: function () {
+      updateAuthNav();
+      updateCartCount();
+      window.location.href = window.BASE_URL + "/";
+    },
+  });
 }
 
 // Initialize on page load

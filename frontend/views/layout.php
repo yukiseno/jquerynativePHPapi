@@ -37,9 +37,6 @@ $user = getCurrentUser();
                     <li class="nav-item" id="profileNav" style="display: none;">
                         <a class="nav-link" href="<?= BASE_URL ?>/profile">Profile</a>
                     </li>
-                    <li class="nav-item" id="ordersNav" style="display: none;">
-                        <a class="nav-link" href="<?= BASE_URL ?>/orders">Orders</a>
-                    </li>
                     <li class="nav-item" id="logoutNav" style="display: none;">
                         <a class="nav-link" href="#" onclick="logout(); return false;">Logout</a>
                     </li>

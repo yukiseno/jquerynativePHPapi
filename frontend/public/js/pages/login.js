@@ -30,17 +30,43 @@ function login() {
       if (response.access_token) {
         localStorage.setItem("authToken", response.access_token);
         localStorage.setItem("authUser", JSON.stringify(response.user));
-        showAlert("Login successful!", "success");
-        setTimeout(() => {
-          updateAuthNav();
-          updateCartCount();
-          window.location.href = window.BASE_URL + "/";
-        }, 1000);
+
+        // Set PHP session
+        setPhpSession(response.access_token, response.user);
       }
     },
     error: function (xhr) {
       const error = xhr.responseJSON?.error || "Login failed";
       showAlert(error, "danger");
+    },
+  });
+}
+
+function setPhpSession(token, user) {
+  $.ajax({
+    url: window.BASE_URL + "/api.php",
+    type: "POST",
+    data: {
+      action: "set_session",
+      token: token,
+      user: JSON.stringify(user),
+    },
+    success: function (response) {
+      showAlert("Login successful!", "success");
+      setTimeout(() => {
+        updateAuthNav();
+        updateCartCount();
+        window.location.href = window.BASE_URL + "/";
+      }, 1000);
+    },
+    error: function () {
+      showAlert("Session error", "warning");
+      // Still redirect even if session failed
+      setTimeout(() => {
+        updateAuthNav();
+        updateCartCount();
+        window.location.href = window.BASE_URL + "/";
+      }, 1000);
     },
   });
 }

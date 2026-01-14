@@ -21,7 +21,7 @@ if (strpos($path, $basePath) === 0) {
 
 // Extract page and parameters from path
 $pageParts = explode('/', filter_var($path, FILTER_SANITIZE_URL));
-$page = $pageParts[0] ?? 'home';
+$page = $pageParts[0] ?? '/';
 $param = $pageParts[1] ?? null;
 
 // Support both clean URLs and query string
@@ -33,7 +33,7 @@ if (isset($_GET['page'])) {
 // Handle logout action
 if (isset($_GET['action']) && $_GET['action'] === 'logout') {
     clearAuth();
-    redirect('home');
+    redirect('/');
 }
 
 // Define pages that require login
@@ -41,12 +41,12 @@ $protectedPages = ['profile', 'orders', 'checkout'];
 
 // Check authentication for protected pages
 if (in_array($page, $protectedPages) && !isLoggedIn()) {
-    redirect('login', ['redirect' => $page]);
+    redirect('/login', ['redirect' => $page]);
 }
 
 // Redirect logged-in users away from login/register
 if (in_array($page, ['login', 'register']) && isLoggedIn()) {
-    redirect('home');
+    redirect('/');
 }
 
 // Include appropriate controller

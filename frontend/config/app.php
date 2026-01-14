@@ -19,9 +19,16 @@ function getCurrentPage()
 // Helper function to redirect
 function redirect($page = 'home', $params = [])
 {
-    $url = BASE_URL . '/?page=' . $page;
+    // If it starts with '/', treat it as a clean URL path
+    if (strpos($page, '/') === 0) {
+        $url = BASE_URL . $page;
+    } else {
+        // Legacy query string based routing
+        $url = BASE_URL . '/?page=' . $page;
+    }
+
     if (!empty($params)) {
-        $url .= '&' . http_build_query($params);
+        $url .= (strpos($url, '?') !== false ? '&' : '?') . http_build_query($params);
     }
     header('Location: ' . $url);
     exit;
