@@ -122,18 +122,19 @@ class User
     }
 
     /**
-     * Verify token and get user
+     * Verify token and get user (STATIC)
      */
-    public function verifyToken($token)
+    public static function verifyToken($token)
     {
         if (!$token) {
             return null;
         }
 
+        $db = Database::getInstance();
         $hashedToken = hash('sha256', $token);
 
         try {
-            $stmt = $this->db->prepare(
+            $stmt = $db->prepare(
                 'SELECT tokenable_id FROM personal_access_tokens 
                  WHERE token = ? AND (expires_at IS NULL OR expires_at > datetime("now"))'
             );
@@ -145,7 +146,7 @@ class User
             }
 
             // Get user data
-            $stmt = $this->db->prepare('SELECT * FROM users WHERE id = ?');
+            $stmt = $db->prepare('SELECT * FROM users WHERE id = ?');
             $stmt->execute([$result['tokenable_id']]);
             $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
@@ -156,23 +157,57 @@ class User
     }
 
     /**
-     * Logout user (revoke token)
+     * Logout user (revoke token) (STATIC)
      */
-    public function logout($token)
+    public static function logout($token)
     {
         if (!$token) {
             return ['success' => false, 'message' => 'Invalid token'];
         }
 
+        $db = Database::getInstance();
         $hashedToken = hash('sha256', $token);
 
         try {
-            $stmt = $this->db->prepare('DELETE FROM personal_access_tokens WHERE token = ?');
+            $stmt = $db->prepare('DELETE FROM personal_access_tokens WHERE token = ?');
             $stmt->execute([$hashedToken]);
 
             return ['success' => true, 'message' => 'Logged out successfully'];
         } catch (Exception $e) {
             return ['success' => false, 'message' => 'Logout failed: ' . $e->getMessage()];
+        }
+    }
+
+    /**
+     * Get user by ID (STATIC)
+     */
+    public static function findById($id)
+    {
+        $db = Database::getInstance();
+
+        try {
+            $stmt = $db->prepare('SELECT * FROM users WHERE id = ?');
+            $stmt->execute([$id]);
+            $user = $stmt->fetch(PDO::FETCH_ASSOC);
+
+            if (!$user) {
+                return null;
+            }
+
+            return [
+                'id' => (int)$user['id'],
+                'name' => $user['name'],
+                'email' => $user['email'],
+                'address' => $user['address'],
+                'city' => $user['city'],
+                'country' => $user['country'],
+                'zip_code' => $user['zip_code'],
+                'phone_number' => $user['phone_number'],
+                'profile_image' => $user['profile_image'],
+                'profile_completed' => $user['profile_completed']
+            ];
+        } catch (Exception $e) {
+            return null;
         }
     }
 

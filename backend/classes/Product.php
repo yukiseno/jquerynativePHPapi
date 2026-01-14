@@ -145,6 +145,31 @@ class Product
     }
 
     /**
+     * Get single product by slug
+     */
+    public static function findBySlug($slug)
+    {
+        $db = Database::getInstance();
+
+        $stmt = $db->prepare("SELECT * FROM products WHERE slug = ? LIMIT 1");
+        $stmt->execute([$slug]);
+        $product = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        if (!$product) {
+            return null;
+        }
+
+        $colors = $db->query("SELECT id, name, created_at, updated_at FROM colors ORDER BY name")->fetchAll(PDO::FETCH_ASSOC);
+        $sizes = $db->query("SELECT id, name, created_at, updated_at FROM sizes ORDER BY name")->fetchAll(PDO::FETCH_ASSOC);
+
+        return [
+            'data' => self::formatProduct($product),
+            'colors' => $colors,
+            'sizes' => $sizes
+        ];
+    }
+
+    /**
      * Format product with colors, sizes, and reviews
      */
     private static function formatProduct($product)

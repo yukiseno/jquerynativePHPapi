@@ -34,6 +34,9 @@
                 <span class="cart-count" id="cartCount">0</span>
               </a>
             </li>
+            <li class="nav-item" id="profileNav" style="display: none">
+              <a class="nav-link" href="profile.html">Profile</a>
+            </li>
             <li class="nav-item" id="loginNav">
               <a class="nav-link" href="login.html">Login</a>
             </li>
@@ -157,7 +160,11 @@
               <span id="total">$0.00</span>
             </div>
 
-            <button class="btn btn-primary w-100" onclick="placeOrder()">
+            <button
+              id="placeOrderBtn"
+              class="btn btn-primary w-100"
+              onclick="placeOrder()"
+            >
               Place Order
             </button>
             <a href="cart.html" class="btn btn-outline-secondary w-100 mt-2">
@@ -178,10 +185,12 @@
         if (token) {
           $("#loginNav").hide();
           $("#registerNav").hide();
+          $("#profileNav").show();
           $("#logoutNav").show();
         } else {
           $("#loginNav").show();
           $("#registerNav").show();
+          $("#profileNav").hide();
           $("#logoutNav").hide();
         }
       }
@@ -321,39 +330,60 @@
           return;
         }
 
-        let subtotal = 0;
-        cart.forEach((item) => (subtotal += item.price * item.quantity));
+        // Get auth token
+        const token = localStorage.getItem("authToken");
+        if (!token) {
+          showAlert("Please login to place order", "danger");
+          return;
+        }
 
+        // Prepare order data
         const orderData = {
-          items: cart,
+          cartItems: cart,
           address: { phoneNumber, address, city, country, zip },
-          subtotal: subtotal,
-          tax: subtotal * 0.1,
-          discount: appliedCoupon ? appliedCoupon.discount_amount : 0,
-          total:
-            subtotal +
-            subtotal * 0.1 -
-            (appliedCoupon ? appliedCoupon.discount_amount : 0),
-          timestamp: new Date().toISOString(),
+          couponId: appliedCoupon ? appliedCoupon.id : null,
         };
 
-        // Save billing address for next shopping
-        const billingAddress = { phoneNumber, address, city, country, zip };
-        localStorage.setItem("billingAddress", JSON.stringify(billingAddress));
+        // Show loading state
+        $("#placeOrderBtn").prop("disabled", true).text("Placing Order...");
 
-        // Save order
-        localStorage.setItem("lastOrder", JSON.stringify(orderData));
+        // Call API to create order
+        $.ajax({
+          url: API_URL + "/orders/store",
+          type: "POST",
+          contentType: "application/json",
+          headers: {
+            Authorization: "Bearer " + token,
+          },
+          data: JSON.stringify(orderData),
+          success: function (response) {
+            // Save billing address for next shopping
+            const billingAddress = { phoneNumber, address, city, country, zip };
+            localStorage.setItem(
+              "billingAddress",
+              JSON.stringify(billingAddress)
+            );
 
-        // Clear cart and coupon
-        localStorage.removeItem("cart");
-        localStorage.removeItem("appliedDiscount");
-        appliedCoupon = null;
+            // Save order to localStorage
+            localStorage.setItem("lastOrder", JSON.stringify(response.data));
 
-        showAlert("Order placed successfully!", "success");
-        setTimeout(() => {
-          updateCartCount();
-          window.location.href = "index.html";
-        }, 1500);
+            // Clear cart and coupon
+            localStorage.removeItem("cart");
+            localStorage.removeItem("appliedDiscount");
+            appliedCoupon = null;
+
+            showAlert("Order placed successfully!", "success");
+            setTimeout(() => {
+              updateCartCount();
+              window.location.href = "index.html";
+            }, 1500);
+          },
+          error: function (xhr) {
+            $("#placeOrderBtn").prop("disabled", false).text("Place Order");
+            const error = xhr.responseJSON?.error || "Failed to place order";
+            showAlert(error, "danger");
+          },
+        });
       }
 
       function loadBillingAddress() {

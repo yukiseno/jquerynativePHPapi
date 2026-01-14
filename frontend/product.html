@@ -65,6 +65,10 @@
                 Cart <span class="cart-count" id="cartCount">0</span>
               </a>
             </li>
+            <!-- Logged in -->
+            <li class="nav-item" id="profileNav" style="display: none">
+              <a class="nav-link" href="profile.html">Profile</a>
+            </li>
             <!-- Not logged in -->
             <li class="nav-item" id="loginNav">
               <a class="nav-link" href="login.html">Login</a>
@@ -91,30 +95,68 @@
             src=""
             class="img-fluid rounded"
             alt="Product"
+            style="max-height: 500px; object-fit: cover"
           />
         </div>
         <div class="col-md-6">
-          <h1 id="productName"></h1>
-          <p id="productDescription" class="text-muted"></p>
-          <h3 id="productPrice" class="text-primary"></h3>
-          <div class="mt-4">
-            <label for="quantity" class="form-label">Quantity:</label>
+          <!-- Product Name & Price -->
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <h1 id="productName" style="font-size: 28px; font-weight: 600"></h1>
+            <h3 id="productPrice" class="text-primary fw-bold"></h3>
+          </div>
+
+          <!-- Description -->
+          <p id="productDescription" class="text-muted mb-4"></p>
+
+          <!-- Stock Status -->
+          <div id="stockStatus" class="mb-3"></div>
+
+          <!-- Sizes Section -->
+          <div class="mb-4">
+            <label class="fw-semibold mb-2">Size:</label>
+            <div id="sizesContainer" class="d-flex gap-2 flex-wrap"></div>
+          </div>
+
+          <!-- Colors Section -->
+          <div class="mb-4">
+            <label class="fw-semibold mb-2">Color:</label>
+            <div id="colorsContainer" class="d-flex gap-2 flex-wrap"></div>
+          </div>
+
+          <!-- Quantity Input -->
+          <div class="mb-4">
+            <label for="quantity" class="form-label fw-semibold"
+              >Quantity:</label
+            >
             <input
               type="number"
               id="quantity"
               class="form-control"
               value="1"
               min="1"
-              max="10"
-              style="width: 100px"
+              style="max-width: 100px"
             />
           </div>
-          <button class="btn btn-primary btn-lg mt-4" onclick="addToCart()">
-            Add to Cart
-          </button>
-          <a href="index.html" class="btn btn-secondary btn-lg mt-4"
-            >Back to Products</a
-          >
+
+          <!-- Add to Cart Button -->
+          <div class="d-flex gap-2">
+            <button
+              id="addToCartBtn"
+              class="btn btn-primary btn-lg"
+              onclick="addToCart()"
+              disabled
+              style="
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                border: none;
+                flex: 1;
+              "
+            >
+              Add to Cart
+            </button>
+            <a href="index.html" class="btn btn-outline-secondary btn-lg">
+              Back to Products
+            </a>
+          </div>
         </div>
       </div>
     </div>
@@ -124,6 +166,8 @@
     <script>
       const API_URL = "http://localhost:3001/api";
       let currentProduct = null;
+      let selectedColor = null;
+      let selectedSize = null;
 
       $(document).ready(function () {
         updateAuthNav();
@@ -133,16 +177,16 @@
 
       function loadProduct() {
         const params = new URLSearchParams(window.location.search);
-        const id = parseInt(params.get("id"));
+        const slug = params.get("slug");
 
-        if (!id) {
-          alert("Invalid product ID");
+        if (!slug) {
+          alert("Invalid product slug");
           window.location.href = "index.html";
           return;
         }
 
         $.ajax({
-          url: API_URL + `/product/${id}/show`,
+          url: API_URL + `/product/${encodeURIComponent(slug)}/slug`,
           type: "GET",
           success: function (response) {
             currentProduct = response.data;
@@ -162,10 +206,104 @@
         $("#productImage")
           .attr("src", product.thumbnail)
           .attr("alt", product.name);
+
+        // Set quantity max
+        $("#quantity").attr("max", Math.max(product.qty, 1));
+
+        // Display stock status
+        const stockHtml =
+          product.status == 1
+            ? '<span class="badge bg-success">In Stock</span>'
+            : '<span class="badge bg-danger">Out of Stock</span>';
+        $("#stockStatus").html(stockHtml);
+
+        // Display sizes
+        let sizesHtml = "";
+        if (product.sizes && product.sizes.length > 0) {
+          product.sizes.forEach((size) => {
+            sizesHtml += `
+              <button 
+                type="button"
+                class="btn btn-outline-secondary size-btn"
+                data-size-id="${size.id}"
+                onclick="selectSize(${size.id}, '${size.name}', this)"
+              >
+                ${size.name}
+              </button>
+            `;
+          });
+        }
+        $("#sizesContainer").html(sizesHtml);
+
+        // Display colors
+        let colorsHtml = "";
+        if (product.colors && product.colors.length > 0) {
+          product.colors.forEach((color) => {
+            const colorValue = color.name.toLowerCase();
+            colorsHtml += `
+              <div 
+                class="color-option"
+                data-color-id="${color.id}"
+                onclick="selectColor(${color.id}, '${color.name}', this)"
+                style="
+                  width: 40px;
+                  height: 40px;
+                  border-radius: 50%;
+                  background-color: ${colorValue};
+                  border: 2px solid #ddd;
+                  cursor: pointer;
+                  transition: all 0.3s;
+                  box-shadow: 0 0 0 0px rgba(0,0,0,0.2);
+                "
+                title="${color.name}"
+              ></div>
+            `;
+          });
+        }
+        $("#colorsContainer").html(colorsHtml);
+      }
+
+      function selectSize(sizeId, sizeName, element) {
+        selectedSize = { id: sizeId, name: sizeName };
+        $(".size-btn")
+          .removeClass("btn-secondary")
+          .addClass("btn-outline-secondary");
+        $(element)
+          .removeClass("btn-outline-secondary")
+          .addClass("btn-secondary");
+        updateAddToCartButton();
+      }
+
+      function selectColor(colorId, colorName, element) {
+        selectedColor = { id: colorId, name: colorName };
+        $(".color-option").css("box-shadow", "0 0 0 0px rgba(0,0,0,0.2)");
+        $(element).css("box-shadow", "0 0 0 3px rgba(102, 126, 234, 0.5)");
+        updateAddToCartButton();
+      }
+
+      function updateAddToCartButton() {
+        const isDisabled =
+          !selectedColor || !selectedSize || currentProduct.status == 0;
+        $("#addToCartBtn").prop("disabled", isDisabled);
+        if (isDisabled) {
+          $("#addToCartBtn").css({
+            background: "#ccc",
+            cursor: "not-allowed",
+          });
+        } else {
+          $("#addToCartBtn").css({
+            background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+            cursor: "pointer",
+          });
+        }
       }
 
       function addToCart() {
         if (!currentProduct) return;
+        if (!selectedColor || !selectedSize) {
+          alert("Please select both size and color");
+          return;
+        }
 
         const quantity = parseInt($("#quantity").val());
         const id = currentProduct.id;
@@ -173,17 +311,43 @@
         const price = currentProduct.price;
 
         let cart = JSON.parse(localStorage.getItem("cart")) || [];
-        const existing = cart.find((item) => item.id === id);
+        const existing = cart.find(
+          (item) =>
+            item.id === id &&
+            item.colorId === selectedColor.id &&
+            item.sizeId === selectedSize.id
+        );
 
         if (existing) {
           existing.quantity += quantity;
         } else {
-          cart.push({ id, name, price, quantity });
+          cart.push({
+            id,
+            name,
+            price,
+            quantity,
+            colorId: selectedColor.id,
+            colorName: selectedColor.name,
+            sizeId: selectedSize.id,
+            sizeName: selectedSize.name,
+            slug: currentProduct.slug,
+            thumbnail: currentProduct.thumbnail,
+          });
         }
 
         localStorage.setItem("cart", JSON.stringify(cart));
         alert("Product added to cart!");
         updateCartCount();
+
+        // Reset selections
+        selectedColor = null;
+        selectedSize = null;
+        $("#quantity").val(1);
+        $(".size-btn")
+          .removeClass("btn-secondary")
+          .addClass("btn-outline-secondary");
+        $(".color-option").css("box-shadow", "0 0 0 0px rgba(0,0,0,0.2)");
+        updateAddToCartButton();
       }
 
       function updateAuthNav() {
@@ -192,18 +356,20 @@
           // Logged in
           $("#loginNav").hide();
           $("#registerNav").hide();
+          $("#profileNav").show();
           $("#logoutNav").show();
         } else {
           // Not logged in
           $("#loginNav").show();
           $("#registerNav").show();
+          $("#profileNav").hide();
           $("#logoutNav").hide();
         }
       }
 
       function logout() {
         localStorage.removeItem("authToken");
-        localStorage.removeItem("user");
+        localStorage.removeItem("authUser");
         updateAuthNav();
         window.location.href = "index.html";
       }

@@ -8,98 +8,7 @@
       href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
       rel="stylesheet"
     />
-    <style>
-      body {
-        background-color: #f8f9fa;
-      }
-      .navbar {
-        background-color: #ffffff;
-        border-bottom: 1px solid #e0e0e0;
-        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-      }
-      .navbar-brand {
-        color: #333 !important;
-        font-size: 18px;
-      }
-      .nav-link {
-        color: #666 !important;
-        font-weight: 500;
-        margin-left: 20px;
-        transition: color 0.3s;
-      }
-      .nav-link:hover {
-        color: #667eea !important;
-      }
-      .filters-section {
-        background: white;
-        padding: 30px;
-        border-radius: 8px;
-        margin-bottom: 30px;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-      }
-      .filter-label {
-        font-weight: 600;
-        margin-bottom: 10px;
-        font-size: 14px;
-        color: #333;
-      }
-      .product-card {
-        transition: transform 0.3s, box-shadow 0.3s;
-        cursor: pointer;
-        height: 100%;
-        border: none;
-      }
-      .product-card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 8px 15px rgba(0, 0, 0, 0.2);
-      }
-      .product-image {
-        width: 100%;
-        height: 200px;
-        object-fit: cover;
-        background: #e0e0e0;
-      }
-      .spinner-container {
-        display: flex;
-        justify-content: center;
-        padding: 60px 20px;
-      }
-      .products-grid {
-        display: grid;
-        grid-template-columns: repeat(4, 1fr);
-        gap: 20px;
-        margin-top: 20px;
-      }
-
-      @media (max-width: 1200px) {
-        .products-grid {
-          grid-template-columns: repeat(3, 1fr);
-        }
-      }
-
-      @media (max-width: 768px) {
-        .products-grid {
-          grid-template-columns: repeat(2, 1fr);
-        }
-      }
-
-      @media (max-width: 576px) {
-        .products-grid {
-          grid-template-columns: repeat(1, 1fr);
-        }
-      }
-      .cart-count {
-        background: #ff4757;
-        color: white;
-        border-radius: 50%;
-        padding: 2px 8px;
-        font-size: 12px;
-        margin-left: 5px;
-      }
-      .alert-container {
-        margin-bottom: 20px;
-      }
-    </style>
+    <link rel="stylesheet" href="style.css" />
   </head>
   <body>
     <!-- Navigation -->
@@ -126,6 +35,10 @@
               <a class="nav-link" href="cart.html">
                 Cart <span class="cart-count" id="cartCount">0</span>
               </a>
+            </li>
+            <!-- Logged in -->
+            <li class="nav-item" id="profileNav" style="display: none">
+              <a class="nav-link" href="profile.html">Profile</a>
             </li>
             <!-- Not logged in -->
             <li class="nav-item" id="loginNav">
@@ -316,34 +229,61 @@
 
       // Render products
       function renderProducts(products) {
-        let html = "";
+        let html = '<div class="row g-4">';
         products.forEach((product) => {
+          const slug = product.slug;
+          const sizes = product.sizes || [];
+          const colors = product.colors || [];
+          const status = product.status == 1 ? "In Stock" : "Out of Stock";
+          const statusClass =
+            product.status == 1 ? "text-success" : "text-danger";
+
+          let sizesHtml = "";
+          sizes.forEach((size) => {
+            sizesHtml += `<span class="badge bg-light text-dark me-1">${size.name}</span>`;
+          });
+
+          let colorsHtml = "";
+          colors.forEach((color) => {
+            const colorValue = color.name.toLowerCase();
+            colorsHtml += `<div class="color-circle" style="background-color: ${colorValue}; width: 20px; height: 20px; border-radius: 50%; border: 1px solid #ddd; display: inline-block; margin-right: 5px;" title="${color.name}"></div>`;
+          });
+
           html += `
-                    <div class="card product-card">
-                        <img src="${
-                          product.thumbnail
-                        }" class="card-img-top product-image" alt="${
+                    <div class="col-12 col-md-6 col-lg-4">
+                      <a href="product.html?slug=${slug}" style="text-decoration: none; color: inherit;">
+                        <div class="card product-card h-100" style="border: 1px solid #e0e0e0; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.1); transition: box-shadow 0.3s;">
+                          <img src="${
+                            product.thumbnail
+                          }" class="card-img-top product-image" alt="${
             product.name
-          }">
-                        <div class="card-body">
-                            <h5 class="card-title">${product.name}</h5>
-                            <p class="card-text text-primary fw-bold">$${(
+          }" style="height: 200px; object-fit: cover;">
+                          <div class="card-body">
+                            <h6 class="card-title fw-semibold">${
+                              product.name
+                            }</h6>
+                            <p class="card-text fw-bold mb-2">$${(
                               product.price / 100
                             ).toFixed(2)}</p>
-                            <button class="btn btn-primary btn-sm w-100" onclick="addToCart(${
-                              product.id
-                            }, '${product.name}', ${product.price})">
-                                Add to Cart
-                            </button>
-                            <a href="product.html?id=${
-                              product.id
-                            }" class="btn btn-outline-secondary btn-sm w-100 mt-2">
-                                View Details
-                            </a>
+                            
+                            <div class="mb-2">
+                              ${sizesHtml}
+                            </div>
+                            
+                            <div class="mb-2">
+                              <small class="fw-semibold ${statusClass}">${status}</small>
+                            </div>
+                            
+                            <div class="mb-2">
+                              ${colorsHtml}
+                            </div>
+                          </div>
                         </div>
+                      </a>
                     </div>
                 `;
         });
+        html += "</div>";
         $("#productsContainer").html(html);
       }
 
@@ -409,11 +349,13 @@
           // Logged in
           $("#loginNav").hide();
           $("#registerNav").hide();
+          $("#profileNav").show();
           $("#logoutNav").show();
         } else {
           // Not logged in
           $("#loginNav").show();
           $("#registerNav").show();
+          $("#profileNav").hide();
           $("#logoutNav").hide();
         }
       }

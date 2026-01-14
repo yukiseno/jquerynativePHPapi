@@ -26,6 +26,7 @@ require_once __DIR__ . '/../../classes/Database.php';
 require_once __DIR__ . '/../../classes/Coupon.php';
 require_once __DIR__ . '/../../classes/Product.php';
 require_once __DIR__ . '/../../classes/User.php';
+require_once __DIR__ . '/../../classes/Order.php';
 
 // Initialize database
 $database = Database::getInstance();
@@ -244,6 +245,218 @@ if ($method === 'GET' && preg_match('/^product\/(\d+)\/show$/', $path, $matches)
     exit;
 }
 
-// Default 404
-http_response_code(404);
-echo json_encode(['error' => 'Endpoint not found']);
+// GET single product by slug
+if ($method === 'GET' && preg_match('/^product\/(.+)\/slug$/', $path, $matches)) {
+    $slug = $matches[1];
+    try {
+        $result = Product::findBySlug($slug);
+        if (!$result) {
+            http_response_code(404);
+            echo json_encode(['error' => 'Product not found']);
+            exit;
+        }
+        http_response_code(200);
+        echo json_encode($result);
+    } catch (Exception $e) {
+        http_response_code(500);
+        echo json_encode(['error' => 'Server error: ' . $e->getMessage()]);
+    }
+    exit;
+}
+
+// POST create order
+if ($method === 'POST' && $path === 'orders/store') {
+    $token = getBearerToken();
+    $user = null;
+
+    if ($token) {
+        try {
+            $user = User::verifyToken($token);
+        } catch (Exception $e) {
+            http_response_code(401);
+            echo json_encode(['error' => 'Unauthorized']);
+            exit;
+        }
+    }
+
+    if (!$user) {
+        http_response_code(401);
+        echo json_encode(['error' => 'Authentication required']);
+        exit;
+    }
+
+    $data = json_decode(file_get_contents('php://input'), true);
+
+    try {
+        // Validate input
+        if (empty($data['cartItems']) || !is_array($data['cartItems'])) {
+            http_response_code(400);
+            echo json_encode(['error' => 'Invalid cart items']);
+            exit;
+        }
+
+        // Validate each cart item has required fields
+        foreach ($data['cartItems'] as $item) {
+            if (empty($item['id']) || empty($item['colorId']) || empty($item['sizeId'])) {
+                http_response_code(400);
+                echo json_encode(['error' => 'Cart items must have id, colorId, and sizeId']);
+                exit;
+            }
+        }
+
+        // Create order
+        $order = Order::createOrder([
+            'user_id' => $user['id'],
+            'cartItems' => $data['cartItems'],
+            'address' => $data['address'] ?? [],
+            'couponId' => $data['couponId'] ?? null
+        ]);
+
+        http_response_code(201);
+        echo json_encode([
+            'message' => 'Order placed successfully',
+            'data' => $order
+        ]);
+    } catch (Exception $e) {
+        http_response_code(500);
+        echo json_encode(['error' => 'Server error: ' . $e->getMessage()]);
+    }
+    exit;
+}
+
+// GET user orders
+if ($method === 'GET' && $path === 'user/orders') {
+    $token = getBearerToken();
+    $user = null;
+
+    if ($token) {
+        try {
+            $user = User::verifyToken($token);
+        } catch (Exception $e) {
+            http_response_code(401);
+            echo json_encode(['error' => 'Unauthorized']);
+            exit;
+        }
+    }
+
+    if (!$user) {
+        http_response_code(401);
+        echo json_encode(['error' => 'Authentication required']);
+        exit;
+    }
+
+    try {
+        $orders = Order::getUserOrders($user['id']);
+        http_response_code(200);
+        echo json_encode([
+            'data' => $orders
+        ]);
+    } catch (Exception $e) {
+        http_response_code(500);
+        echo json_encode(['error' => 'Server error: ' . $e->getMessage()]);
+    }
+    exit;
+}
+
+// Get single order by ID
+if ($method === 'GET' && preg_match('/^orders\/(\d+)$/', $path, $matches)) {
+    $orderId = $matches[1];
+    $token = getBearerToken();
+    $user = null;
+
+    if ($token) {
+        try {
+            $user = User::verifyToken($token);
+        } catch (Exception $e) {
+            http_response_code(401);
+            echo json_encode(['error' => 'Unauthorized']);
+            exit;
+        }
+    }
+
+    if (!$user) {
+        http_response_code(401);
+        echo json_encode(['error' => 'Authentication required']);
+        exit;
+    }
+
+    try {
+        $order = Order::getOrderById($orderId);
+
+        if (!$order) {
+            http_response_code(404);
+            echo json_encode(['error' => 'Order not found']);
+            exit;
+        }
+
+        // Verify order belongs to user
+        if ($order['order']['user_id'] !== $user['id']) {
+            http_response_code(403);
+            echo json_encode(['error' => 'Forbidden']);
+            exit;
+        }
+
+        http_response_code(200);
+        echo json_encode([
+            'data' => array_merge($order['order'], ['items' => $order['items']])
+        ]);
+    } catch (Exception $e) {
+        http_response_code(500);
+        echo json_encode(['error' => 'Server error: ' . $e->getMessage()]);
+    }
+    exit;
+}
+
+// Update user profile
+if ($method === 'POST' && $path === 'user/profile/update') {
+    $token = getBearerToken();
+    $user = null;
+
+    if ($token) {
+        try {
+            $user = User::verifyToken($token);
+        } catch (Exception $e) {
+            http_response_code(401);
+            echo json_encode(['error' => 'Unauthorized']);
+            exit;
+        }
+    }
+
+    if (!$user) {
+        http_response_code(401);
+        echo json_encode(['error' => 'Authentication required']);
+        exit;
+    }
+
+    $data = json_decode(file_get_contents('php://input'), true);
+
+    try {
+        $db = Database::getInstance();
+        $stmt = $db->prepare("
+            UPDATE users 
+            SET phone_number = ?, address = ?, city = ?, country = ?, zip_code = ?, updated_at = datetime('now')
+            WHERE id = ?
+        ");
+
+        $stmt->execute([
+            $data['phoneNumber'] ?? '',
+            $data['address'] ?? '',
+            $data['city'] ?? '',
+            $data['country'] ?? '',
+            $data['zip'] ?? '',
+            $user['id']
+        ]);
+
+        // Return updated user info
+        $updatedUser = User::findById($user['id']);
+
+        http_response_code(200);
+        echo json_encode([
+            'data' => $updatedUser
+        ]);
+    } catch (Exception $e) {
+        http_response_code(500);
+        echo json_encode(['error' => 'Server error: ' . $e->getMessage()]);
+    }
+    exit;
+}
