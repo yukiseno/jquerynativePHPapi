@@ -120,51 +120,10 @@
     </div>
 
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-      const sampleProducts = [
-        {
-          id: 1,
-          name: "Wireless Headphones",
-          price: 79.99,
-          image: "https://via.placeholder.com/400x300?text=Headphones",
-          description: "Premium noise-cancelling wireless headphones",
-        },
-        {
-          id: 2,
-          name: "USB-C Cable",
-          price: 14.99,
-          image: "https://via.placeholder.com/400x300?text=Cable",
-          description: "Durable USB-C charging and data cable",
-        },
-        {
-          id: 3,
-          name: "Phone Case",
-          price: 19.99,
-          image: "https://via.placeholder.com/400x300?text=Phone+Case",
-          description: "Protective phone case with stylish design",
-        },
-        {
-          id: 4,
-          name: "Screen Protector",
-          price: 9.99,
-          image: "https://via.placeholder.com/400x300?text=Screen+Protector",
-          description: "Tempered glass screen protector",
-        },
-        {
-          id: 5,
-          name: "Power Bank",
-          price: 39.99,
-          image: "https://via.placeholder.com/400x300?text=Power+Bank",
-          description: "20000mAh portable power bank",
-        },
-        {
-          id: 6,
-          name: "Laptop Stand",
-          price: 34.99,
-          image: "https://via.placeholder.com/400x300?text=Laptop+Stand",
-          description: "Adjustable aluminum laptop stand",
-        },
-      ];
+      const API_URL = "http://localhost:3001/api";
+      let currentProduct = null;
 
       $(document).ready(function () {
         updateAuthNav();
@@ -174,27 +133,44 @@
 
       function loadProduct() {
         const params = new URLSearchParams(window.location.search);
-        const id = parseInt(params.get("id")) || 1;
+        const id = parseInt(params.get("id"));
 
-        const product = sampleProducts.find((p) => p.id === id);
-        if (product) {
-          $("#productName").text(product.name);
-          $("#productDescription").text(product.description);
-          $("#productPrice").text("$" + product.price.toFixed(2));
-          $("#productImage").attr("src", product.image);
-        } else {
-          alert("Product not found");
+        if (!id) {
+          alert("Invalid product ID");
           window.location.href = "index.html";
+          return;
         }
+
+        $.ajax({
+          url: API_URL + `/product/${id}/show`,
+          type: "GET",
+          success: function (response) {
+            currentProduct = response.data;
+            displayProduct(currentProduct);
+          },
+          error: function () {
+            alert("Product not found");
+            window.location.href = "index.html";
+          },
+        });
+      }
+
+      function displayProduct(product) {
+        $("#productName").text(product.name);
+        $("#productDescription").text(product.desc);
+        $("#productPrice").text("$" + (product.price / 100).toFixed(2));
+        $("#productImage")
+          .attr("src", product.thumbnail)
+          .attr("alt", product.name);
       }
 
       function addToCart() {
-        const params = new URLSearchParams(window.location.search);
-        const id = parseInt(params.get("id")) || 1;
-        const quantity = parseInt($("#quantity").val());
+        if (!currentProduct) return;
 
-        const product = sampleProducts.find((p) => p.id === id);
-        if (!product) return;
+        const quantity = parseInt($("#quantity").val());
+        const id = currentProduct.id;
+        const name = currentProduct.name;
+        const price = currentProduct.price;
 
         let cart = JSON.parse(localStorage.getItem("cart")) || [];
         const existing = cart.find((item) => item.id === id);
@@ -202,12 +178,12 @@
         if (existing) {
           existing.quantity += quantity;
         } else {
-          cart.push({ id, name: product.name, price: product.price, quantity });
+          cart.push({ id, name, price, quantity });
         }
 
         localStorage.setItem("cart", JSON.stringify(cart));
         alert("Product added to cart!");
-        window.location.href = "cart.html";
+        updateCartCount();
       }
 
       function updateAuthNav() {

@@ -8,142 +8,7 @@
       href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
       rel="stylesheet"
     />
-    <style>
-      body {
-        background-color: #f8f9fa;
-      }
-      .navbar {
-        background-color: #ffffff;
-        border-bottom: 1px solid #e0e0e0;
-        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-      }
-      .navbar-brand {
-        color: #333 !important;
-        font-size: 18px;
-      }
-      .nav-link {
-        color: #666 !important;
-        font-weight: 500;
-        margin-left: 20px;
-        transition: color 0.3s;
-      }
-      .nav-link:hover {
-        color: #667eea !important;
-      }
-      .cart-count {
-        background: #ff4757;
-        color: white;
-        border-radius: 50%;
-        padding: 2px 8px;
-        font-size: 12px;
-        margin-left: 5px;
-      }
-      .checkout-container {
-        padding: 40px 0;
-      }
-      .section-title {
-        font-size: 20px;
-        font-weight: 600;
-        margin-bottom: 20px;
-        color: #333;
-      }
-      .form-card {
-        background: white;
-        border: 1px solid #e0e0e0;
-        border-radius: 8px;
-        padding: 30px;
-        margin-bottom: 20px;
-        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-      }
-      .form-label {
-        font-weight: 500;
-        color: #333;
-        margin-bottom: 8px;
-      }
-      .form-control {
-        border: 1px solid #ddd;
-        padding: 10px 12px;
-        font-size: 14px;
-      }
-      .form-control:focus {
-        border-color: #667eea;
-        box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
-      }
-      .order-summary {
-        background: white;
-        border: 1px solid #e0e0e0;
-        border-radius: 8px;
-        padding: 30px;
-        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-      }
-      .summary-item {
-        display: flex;
-        justify-content: space-between;
-        padding: 10px 0;
-        border-bottom: 1px solid #eee;
-        font-size: 14px;
-      }
-      .summary-item:last-child {
-        border-bottom: none;
-      }
-      .summary-total {
-        display: flex;
-        justify-content: space-between;
-        padding: 15px 0;
-        border-top: 2px solid #333;
-        margin-top: 15px;
-        font-size: 18px;
-        font-weight: 600;
-        color: #333;
-      }
-      .btn-checkout {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        border: none;
-        padding: 12px;
-        font-weight: 500;
-        margin-top: 20px;
-      }
-      .btn-checkout:hover {
-        background: linear-gradient(135deg, #5568d3 0%, #6a3f8f 100%);
-        color: white;
-      }
-      .coupon-section {
-        background: #f8f9fa;
-        padding: 20px;
-        border-radius: 8px;
-        margin-bottom: 20px;
-      }
-      .coupon-input-group {
-        display: flex;
-        gap: 10px;
-      }
-      .coupon-input-group input {
-        flex: 1;
-      }
-      .coupon-input-group button {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        border: none;
-        color: white;
-        padding: 10px 20px;
-        border-radius: 4px;
-      }
-      .coupon-input-group button:hover {
-        background: linear-gradient(135deg, #5568d3 0%, #6a3f8f 100%);
-      }
-      .alert-container {
-        margin-bottom: 20px;
-      }
-      .row-container {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 30px;
-      }
-      @media (max-width: 768px) {
-        .row-container {
-          grid-template-columns: 1fr;
-        }
-      }
-    </style>
+    <link rel="stylesheet" href="style.css" />
   </head>
   <body>
     <!-- Navbar -->
@@ -247,7 +112,13 @@
                 id="couponInput"
                 placeholder="Enter promo code"
               />
-              <button type="button" onclick="applyCoupon()">Apply</button>
+              <button
+                type="button"
+                onclick="applyCoupon()"
+                class="btn btn-primary"
+              >
+                Apply
+              </button>
             </div>
             <small class="text-muted d-block mt-2"
               >Try: WELCOME10 or SUMMER20</small
@@ -286,7 +157,7 @@
               <span id="total">$0.00</span>
             </div>
 
-            <button class="btn btn-checkout w-100" onclick="placeOrder()">
+            <button class="btn btn-primary w-100" onclick="placeOrder()">
               Place Order
             </button>
             <a href="cart.html" class="btn btn-outline-secondary w-100 mt-2">
