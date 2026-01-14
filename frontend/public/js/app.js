@@ -48,7 +48,46 @@ function updateCartCount() {
   if (cartElement) cartElement.textContent = count;
 }
 
+// Auth Management
+function updateAuthNav() {
+  const token = localStorage.getItem("authToken");
+  if (token) {
+    const loginNav = document.getElementById("loginNav");
+    const registerNav = document.getElementById("registerNav");
+    const profileNav = document.getElementById("profileNav");
+    const ordersNav = document.getElementById("ordersNav");
+    const logoutNav = document.getElementById("logoutNav");
+
+    if (loginNav) loginNav.style.display = "none";
+    if (registerNav) registerNav.style.display = "none";
+    if (profileNav) profileNav.style.display = "block";
+    if (ordersNav) ordersNav.style.display = "block";
+    if (logoutNav) logoutNav.style.display = "block";
+  } else {
+    const loginNav = document.getElementById("loginNav");
+    const registerNav = document.getElementById("registerNav");
+    const profileNav = document.getElementById("profileNav");
+    const ordersNav = document.getElementById("ordersNav");
+    const logoutNav = document.getElementById("logoutNav");
+
+    if (loginNav) loginNav.style.display = "block";
+    if (registerNav) registerNav.style.display = "block";
+    if (profileNav) profileNav.style.display = "none";
+    if (ordersNav) ordersNav.style.display = "none";
+    if (logoutNav) logoutNav.style.display = "none";
+  }
+}
+
+function logout() {
+  localStorage.removeItem("authToken");
+  localStorage.removeItem("authUser");
+  updateAuthNav();
+  updateCartCount();
+  window.location.href = window.BASE_URL + "/";
+}
+
 // Initialize on page load
 document.addEventListener("DOMContentLoaded", function () {
   updateCartCount();
+  updateAuthNav();
 });
