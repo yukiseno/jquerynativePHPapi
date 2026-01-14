@@ -118,9 +118,19 @@
               <button
                 type="button"
                 onclick="applyCoupon()"
+                id="applyCouponBtn"
                 class="btn btn-primary"
               >
                 Apply
+              </button>
+              <button
+                type="button"
+                onclick="removeCoupon()"
+                id="removeCouponBtn"
+                class="btn btn-outline-danger"
+                style="display: none"
+              >
+                Remove
               </button>
             </div>
             <small class="text-muted d-block mt-2"
@@ -153,6 +163,20 @@
             <div class="summary-item" id="discountRow" style="display: none">
               <span>Discount:</span>
               <span id="discount" class="text-success">-$0.00</span>
+            </div>
+            <div class="summary-item" id="couponRow" style="display: none">
+              <span>Coupon:</span>
+              <span>
+                <span id="couponCode" class="badge bg-success"></span>
+                <button
+                  type="button"
+                  onclick="removeCoupon()"
+                  class="btn btn-sm btn-outline-danger ms-2"
+                  style="padding: 2px 8px; font-size: 12px"
+                >
+                  ✕
+                </button>
+              </span>
             </div>
 
             <div class="summary-total">
@@ -239,28 +263,42 @@
           html += `
             <div class="summary-item">
               <span>${item.name} x${item.quantity}</span>
-              <span>$${total.toFixed(2)}</span>
+              <span>$${(total / 100).toFixed(2)}</span>
             </div>
           `;
         });
 
         $("#orderItems").html(html);
-        updateOrderTotal(subtotal);
+
+        // Check if there's an applied coupon and calculate discount
+        const discount = appliedCoupon ? appliedCoupon.discount_amount : 0;
+        updateOrderTotal(subtotal, discount);
       }
 
       function updateOrderTotal(subtotal, discount = 0) {
-        const tax = subtotal * 0.1;
-        const total = subtotal + tax - discount;
+        // Convert from cents to dollars (subtotal is in cents)
+        const subtotalDollars = subtotal / 100;
+        const tax = subtotalDollars * 0.1;
+        const total = subtotalDollars + tax - discount / 100;
 
-        $("#subtotal").text("$" + subtotal.toFixed(2));
+        $("#subtotal").text("$" + subtotalDollars.toFixed(2));
         $("#tax").text("$" + tax.toFixed(2));
-        $("#discount").text("-$" + discount.toFixed(2));
+        $("#discount").text("-$" + (discount / 100).toFixed(2));
         $("#total").text("$" + total.toFixed(2));
 
         if (discount > 0) {
           $("#discountRow").show();
         } else {
           $("#discountRow").hide();
+        }
+
+        // Show coupon row if coupon is applied
+        if (appliedCoupon) {
+          console.log("Coupon data:", appliedCoupon);
+          $("#couponCode").text(appliedCoupon.code);
+          $("#couponRow").show();
+        } else {
+          $("#couponRow").hide();
         }
       }
 
@@ -280,13 +318,21 @@
           success: function (response) {
             if (response.success) {
               appliedCoupon = response.data;
+              // Save coupon to localStorage
+              localStorage.setItem(
+                "appliedCoupon",
+                JSON.stringify(response.data)
+              );
               showCouponMessage(
-                `Coupon applied! Discount: $${response.data.discount_amount.toFixed(
+                `Coupon "${couponCode}" applied! Discount: $${response.data.discount_amount.toFixed(
                   2
                 )}`,
                 "success"
               );
-              $("#couponInput").val("");
+              // Update UI - show remove button, disable input
+              $("#couponInput").prop("disabled", true);
+              $("#applyCouponBtn").hide();
+              $("#removeCouponBtn").show();
 
               // Update order total with discount
               const cart = JSON.parse(localStorage.getItem("cart")) || [];
@@ -301,8 +347,25 @@
               "danger"
             );
             appliedCoupon = null;
+            localStorage.removeItem("appliedCoupon");
           },
         });
+      }
+
+      function removeCoupon() {
+        appliedCoupon = null;
+        localStorage.removeItem("appliedCoupon");
+
+        // Reset UI
+        $("#couponInput").val("");
+        $("#couponInput").prop("disabled", false);
+        $("#applyCouponBtn").show();
+        $("#removeCouponBtn").hide();
+
+        showCouponMessage("Coupon removed", "info");
+
+        // Re-render order summary without discount
+        renderOrderSummary();
       }
 
       function showCouponMessage(message, type) {
@@ -411,8 +474,29 @@
         }
 
         loadBillingAddress();
+        loadAppliedCoupon();
         renderOrderSummary();
       });
+
+      // Load applied coupon from localStorage
+      function loadAppliedCoupon() {
+        const savedCoupon = localStorage.getItem("appliedCoupon");
+        if (savedCoupon) {
+          appliedCoupon = JSON.parse(savedCoupon);
+          // Display coupon in the input field
+          $("#couponInput").val(appliedCoupon.code);
+          $("#couponInput").prop("disabled", true);
+          // Show remove button, hide apply button
+          $("#applyCouponBtn").hide();
+          $("#removeCouponBtn").show();
+          showCouponMessage(
+            `Coupon "${
+              appliedCoupon.code
+            }" applied! Discount: $${appliedCoupon.discount_amount.toFixed(2)}`,
+            "success"
+          );
+        }
+      }
     </script>
   </body>
 </html>

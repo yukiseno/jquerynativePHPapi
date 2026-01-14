@@ -67,7 +67,7 @@ class Coupon
     {
         return [
             'id' => $this->data['id'] ?? null,
-            'name' => $this->data['name'] ?? null,
+            'code' => $this->data['name'] ?? null,
             'discount_amount' => $this->data['discount'] ?? 0,
             'valid_until' => $this->data['valid_until'] ?? null,
         ];

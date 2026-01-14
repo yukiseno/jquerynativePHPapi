@@ -49,7 +49,7 @@ class Order
 
             if (!empty($data['couponId'])) {
                 $coupon = self::getCoupon($data['couponId']);
-                if ($coupon && $coupon['active']) {
+                if ($coupon) {
                     $discountTotal = (int)round($subtotal * ($coupon['discount'] / 100));
                     $couponId = $coupon['id'];
                 }
