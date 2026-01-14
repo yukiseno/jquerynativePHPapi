@@ -17,7 +17,7 @@ $user = getCurrentUser();
     <!-- Navigation -->
     <nav class="navbar navbar-expand-lg navbar-light bg-white border-bottom">
         <div class="container">
-            <a class="navbar-brand fw-bold" href="<?= BASE_URL ?>/?page=home">
+            <a class="navbar-brand fw-bold" href="<?= BASE_URL ?>">
                 <img src="/images/logo.svg" alt="<?= APP_NAME ?>" height="24" class="me-2" />
                 <?= APP_NAME ?>
             </a>
@@ -27,7 +27,7 @@ $user = getCurrentUser();
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav ms-auto">
                     <li class="nav-item">
-                        <a class="nav-link" href="<?= BASE_URL ?>/?page=home">Home</a>
+                        <a class="nav-link" href="<?= BASE_URL ?>">Home</a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link" href="<?= BASE_URL ?>/?page=cart">
