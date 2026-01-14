@@ -1,4 +1,4 @@
-<div class="d-flex align-items-center justify-content-center min-vh-100 py-5">
+<div class="d-flex align-items-center justify-content-center py-5">
     <div class="card border-0 shadow-sm" style="width: 100%; max-width: 400px">
         <div class="card-body p-5">
             <h2 class="text-center fw-bold mb-4">Login</h2>
