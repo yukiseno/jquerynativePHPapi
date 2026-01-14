@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Coupon Test</title>
+    <style>
+      body {
+        font-family: Arial;
+        max-width: 800px;
+        margin: 50px auto;
+      }
+      .test-section {
+        border: 1px solid #ccc;
+        padding: 20px;
+        margin: 20px 0;
+        border-radius: 5px;
+      }
+      input {
+        padding: 8px;
+        margin: 5px;
+        width: 200px;
+      }
+      button {
+        padding: 8px 15px;
+        margin: 5px;
+        cursor: pointer;
+        background: #007bff;
+        color: white;
+        border: none;
+        border-radius: 3px;
+      }
+      button:hover {
+        background: #0056b3;
+      }
+      .result {
+        margin-top: 15px;
+        padding: 10px;
+        background: #f0f0f0;
+        border-radius: 3px;
+        white-space: pre-wrap;
+        word-wrap: break-word;
+      }
+      .success {
+        background: #d4edda;
+        color: #155724;
+      }
+      .error {
+        background: #f8d7da;
+        color: #721c24;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Coupon API Test</h1>
+
+    <div class="test-section">
+      <h2>Test Apply Coupon</h2>
+      <div>
+        <label>Coupon Code:</label>
+        <input
+          type="text"
+          id="couponCode"
+          placeholder="e.g., WELCOME10"
+          value="WELCOME10"
+        />
+      </div>
+      <button onclick="testCoupon()">Apply Coupon</button>
+      <div id="result"></div>
+    </div>
+
+    <div class="test-section">
+      <h2>Available Test Coupons:</h2>
+      <ul>
+        <li><strong>WELCOME10</strong> - 10% discount</li>
+        <li><strong>SUMMER20</strong> - 20% discount</li>
+        <li><strong>INVALID</strong> - Should fail</li>
+      </ul>
+    </div>
+
+    <script>
+      function testCoupon() {
+        const couponCode = document.getElementById("couponCode").value;
+        const resultDiv = document.getElementById("result");
+
+        if (!couponCode) {
+          resultDiv.className = "result error";
+          resultDiv.textContent = "Please enter a coupon code";
+          return;
+        }
+
+        fetch("http://localhost:3001/api/apply/coupon", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            coupon_code: couponCode,
+          }),
+        })
+          .then((response) => response.json())
+          .then((data) => {
+            resultDiv.className =
+              "result " + (data.success ? "success" : "error");
+            resultDiv.textContent = JSON.stringify(data, null, 2);
+          })
+          .catch((error) => {
+            resultDiv.className = "result error";
+            resultDiv.textContent = "Error: " + error.message;
+          });
+      }
+
+      // Test on page load
+      window.addEventListener("load", () => {
+        console.log("Test page loaded. Try entering a coupon code above.");
+      });
+    </script>
+  </body>
+</html>

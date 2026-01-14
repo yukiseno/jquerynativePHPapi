@@ -1,0 +1,61 @@
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Logs
+*.log
+logs/
+
+# Database
+*.sqlite
+*.db
+*.sqlite3
+
+# PHP
+vendor/
+composer.lock
+
+# Node
+node_modules/
+npm-debug.log
+yarn-error.log
+
+# Build
+dist/
+build/
+*.tar.gz
+
+# OS
+.DS_Store
+Thumbs.db
+*.tmp
+
+# Testing
+coverage/
+.coverage
+.pytest_cache/
+
+# Temporary
+tmp/
+temp/
+
+# Personal/Internal Documentation (Keep locally, don't push to GitHub)
+COMPLETION_SUMMARY.md
+README_ENHANCEMENT_COMPLETE.md
+DOCUMENTATION_OVERVIEW.md
+CODE_REVIEW_FIXES.md
+IMPLEMENTATION_SUMMARY.md
+QUICK_REFERENCE.md
+INDEX.sh
+INTERVIEW_CHECKLIST.sh
+INTERVIEW_PREP.md
+INTERVIEW_QUICK_REFERENCE.md

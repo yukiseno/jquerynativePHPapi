@@ -1,0 +1,249 @@
+<?php
+
+header('Content-Type: application/json');
+header('Access-Control-Allow-Origin: *');
+header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
+header('Access-Control-Allow-Headers: Content-Type, Authorization');
+
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+    http_response_code(200);
+    exit;
+}
+
+// Load environment variables
+if (file_exists(__DIR__ . '/../../.env')) {
+    $env = file_get_contents(__DIR__ . '/../../.env');
+    foreach (explode("\n", $env) as $line) {
+        if (strpos($line, '=') !== false && strpos($line, '#') !== 0) {
+            list($key, $value) = explode('=', $line, 2);
+            putenv(trim($key) . '=' . trim($value));
+        }
+    }
+}
+
+// Load classes
+require_once __DIR__ . '/../../classes/Database.php';
+require_once __DIR__ . '/../../classes/Coupon.php';
+require_once __DIR__ . '/../../classes/Product.php';
+require_once __DIR__ . '/../../classes/User.php';
+
+// Initialize database
+$database = Database::getInstance();
+
+// Parse request
+$method = $_SERVER['REQUEST_METHOD'];
+$path = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
+$path = preg_replace('/^\/api/', '', $path);
+$path = trim($path, '/');
+
+// Helper function to get Bearer token
+function getBearerToken()
+{
+    $headers = getallheaders();
+    if (isset($headers['Authorization'])) {
+        if (preg_match('/Bearer\s+(\S+)/', $headers['Authorization'], $matches)) {
+            return $matches[1];
+        }
+    }
+    return null;
+}
+
+// Helper function to get JSON body
+function getJsonBody()
+{
+    return json_decode(file_get_contents('php://input'), true) ?? [];
+}
+
+// USER REGISTER
+if ($method === 'POST' && $path === 'user/register') {
+    $body = getJsonBody();
+    $name = $body['name'] ?? null;
+    $email = $body['email'] ?? null;
+    $password = $body['password'] ?? null;
+
+    if (!$name || !$email || !$password) {
+        http_response_code(400);
+        echo json_encode(['error' => 'Name, email, and password are required']);
+        exit;
+    }
+
+    $user = new User();
+    $result = $user->register($name, $email, $password);
+
+    if ($result['success']) {
+        http_response_code(201);
+        echo json_encode(['message' => $result['message']]);
+    } else {
+        http_response_code(400);
+        echo json_encode(['error' => $result['message']]);
+    }
+    exit;
+}
+
+// USER LOGIN
+if ($method === 'POST' && $path === 'user/login') {
+    $body = getJsonBody();
+    $email = $body['email'] ?? null;
+    $password = $body['password'] ?? null;
+
+    if (!$email || !$password) {
+        http_response_code(400);
+        echo json_encode(['error' => 'Email and password are required']);
+        exit;
+    }
+
+    $user = new User();
+    $result = $user->login($email, $password);
+
+    if ($result['success']) {
+        http_response_code(200);
+        echo json_encode([
+            'user' => $result['user'],
+            'access_token' => $result['access_token']
+        ]);
+    } else {
+        http_response_code(401);
+        echo json_encode(['error' => $result['message']]);
+    }
+    exit;
+}
+
+// USER LOGOUT
+if ($method === 'POST' && $path === 'user/logout') {
+    $token = getBearerToken();
+
+    if (!$token) {
+        http_response_code(401);
+        echo json_encode(['error' => 'Unauthorized']);
+        exit;
+    }
+
+    $user = new User();
+    $result = $user->logout($token);
+
+    if ($result['success']) {
+        http_response_code(200);
+        echo json_encode(['message' => $result['message']]);
+    } else {
+        http_response_code(400);
+        echo json_encode(['error' => $result['message']]);
+    }
+    exit;
+}
+
+// API Routes
+if ($method === 'POST' && $path === 'apply/coupon') {
+    $body = getJsonBody();
+    $couponCode = $body['coupon_code'] ?? $body['name'] ?? null;
+
+    if (!$couponCode) {
+        http_response_code(400);
+        echo json_encode(['error' => 'Coupon code is required']);
+        exit;
+    }
+
+    try {
+        $coupon = Coupon::findByName($couponCode);
+
+        if (!$coupon) {
+            http_response_code(400);
+            echo json_encode(['error' => 'Invalid or expired coupon']);
+            exit;
+        }
+
+        if (!$coupon->isValid()) {
+            http_response_code(400);
+            echo json_encode(['error' => 'Invalid or expired coupon']);
+            exit;
+        }
+
+        http_response_code(200);
+        echo json_encode([
+            'success' => true,
+            'message' => 'Coupon applied successfully',
+            'data' => $coupon->toApiArray()
+        ]);
+    } catch (Exception $e) {
+        http_response_code(500);
+        echo json_encode(['error' => 'Server error: ' . $e->getMessage()]);
+    }
+    exit;
+}
+
+// GET all products
+if ($method === 'GET' && $path === 'products') {
+    try {
+        $result = Product::getAll();
+        http_response_code(200);
+        echo json_encode($result);
+    } catch (Exception $e) {
+        http_response_code(500);
+        echo json_encode(['error' => 'Server error: ' . $e->getMessage()]);
+    }
+    exit;
+}
+
+// GET products by color
+if ($method === 'GET' && preg_match('/^products\/(\d+)\/color$/', $path, $matches)) {
+    $colorId = $matches[1];
+    try {
+        $result = Product::filterByColor($colorId);
+        http_response_code(200);
+        echo json_encode($result);
+    } catch (Exception $e) {
+        http_response_code(500);
+        echo json_encode(['error' => 'Server error: ' . $e->getMessage()]);
+    }
+    exit;
+}
+
+// GET products by size
+if ($method === 'GET' && preg_match('/^products\/(\d+)\/size$/', $path, $matches)) {
+    $sizeId = $matches[1];
+    try {
+        $result = Product::filterBySize($sizeId);
+        http_response_code(200);
+        echo json_encode($result);
+    } catch (Exception $e) {
+        http_response_code(500);
+        echo json_encode(['error' => 'Server error: ' . $e->getMessage()]);
+    }
+    exit;
+}
+
+// GET products by search term
+if ($method === 'GET' && preg_match('/^products\/(.+)\/find$/', $path, $matches)) {
+    $searchTerm = urldecode($matches[1]);
+    try {
+        $result = Product::findByTerm($searchTerm);
+        http_response_code(200);
+        echo json_encode($result);
+    } catch (Exception $e) {
+        http_response_code(500);
+        echo json_encode(['error' => 'Server error: ' . $e->getMessage()]);
+    }
+    exit;
+}
+
+// GET single product
+if ($method === 'GET' && preg_match('/^product\/(\d+)\/show$/', $path, $matches)) {
+    $productId = $matches[1];
+    try {
+        $result = Product::findById($productId);
+        if (!$result) {
+            http_response_code(404);
+            echo json_encode(['error' => 'Product not found']);
+            exit;
+        }
+        http_response_code(200);
+        echo json_encode($result);
+    } catch (Exception $e) {
+        http_response_code(500);
+        echo json_encode(['error' => 'Server error: ' . $e->getMessage()]);
+    }
+    exit;
+}
+
+// Default 404
+http_response_code(404);
+echo json_encode(['error' => 'Endpoint not found']);
