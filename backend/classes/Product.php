@@ -11,6 +11,7 @@ class Product
 
     /**
      * Get all products with colors and sizes - Laravel format
+     * Returns only colors and sizes that are actually used by products
      */
     public static function getAll()
     {
@@ -23,8 +24,21 @@ class Product
             $productData[] = self::formatProduct($product);
         }
 
-        $colors = $db->query("SELECT id, name, created_at, updated_at FROM colors ORDER BY name")->fetchAll(PDO::FETCH_ASSOC);
-        $sizes = $db->query("SELECT id, name, created_at, updated_at FROM sizes ORDER BY name")->fetchAll(PDO::FETCH_ASSOC);
+        // Get only colors that are actually used by products
+        $colors = $db->query("
+            SELECT DISTINCT c.id, c.name, c.created_at, c.updated_at 
+            FROM colors c
+            JOIN color_product cp ON c.id = cp.color_id
+            ORDER BY c.name
+        ")->fetchAll(PDO::FETCH_ASSOC);
+
+        // Get only sizes that are actually used by products
+        $sizes = $db->query("
+            SELECT DISTINCT s.id, s.name, s.created_at, s.updated_at 
+            FROM sizes s
+            JOIN product_size ps ON s.id = ps.size_id
+            ORDER BY s.name
+        ")->fetchAll(PDO::FETCH_ASSOC);
 
         return [
             'data' => $productData,
