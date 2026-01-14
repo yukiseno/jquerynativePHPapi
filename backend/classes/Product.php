@@ -100,8 +100,8 @@ class Product
     {
         $db = Database::getInstance();
 
-        $stmt = $db->prepare("SELECT * FROM products WHERE name LIKE ? OR description LIKE ? ORDER BY id DESC");
-        $stmt->execute(['%' . $searchTerm . '%', '%' . $searchTerm . '%']);
+        $stmt = $db->prepare("SELECT * FROM products WHERE name LIKE ? ORDER BY id DESC");
+        $stmt->execute(['%' . $searchTerm . '%']);
         $products = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
         $productData = [];
