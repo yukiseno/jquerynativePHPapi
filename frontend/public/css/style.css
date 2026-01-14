@@ -145,7 +145,6 @@ body {
 
 .product-card:hover {
   box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15) !important;
-  transform: translateY(-2px);
 }
 
 /* Skeleton Loader Styles */
