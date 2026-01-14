@@ -189,7 +189,7 @@
       function updateCartCount() {
         const cart = JSON.parse(localStorage.getItem("cart")) || [];
         const count = cart.reduce((sum, item) => sum + item.quantity, 0);
-        $("#cartCount").text(count > 0 ? count : "");
+        $("#cartCount").text(count);
       }
 
       function formatPrice(cents) {
