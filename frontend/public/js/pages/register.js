@@ -1,11 +1,4 @@
 $(document).ready(function () {
-  // If user is already logged in, redirect to home
-  const token = localStorage.getItem("authToken");
-  if (token) {
-    window.location.href = window.BASE_URL + "/";
-    return;
-  }
-
   $("#registerForm").on("submit", function (e) {
     e.preventDefault();
     register();
