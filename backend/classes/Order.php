@@ -105,12 +105,22 @@ class Order
 
             // Update user address if provided
             if (!empty($data['address'])) {
-                $datetimeFunc = self::getDatetimeFunction();
-                $addressStmt = $db->prepare("
-                    UPDATE users 
-                    SET phone_number = ?, address = ?, city = ?, country = ?, zip_code = ?, updated_at = {$datetimeFunc}
-                    WHERE id = ?
-                ");
+                $dbType = getenv('DB_TYPE') ?: 'sqlite';
+                if ($dbType === 'mysql') {
+                    // For MySQL, we don't need to explicitly set updated_at as it has ON UPDATE CURRENT_TIMESTAMP
+                    $addressStmt = $db->prepare("
+                        UPDATE users 
+                        SET phone_number = ?, address = ?, city = ?, country = ?, zip_code = ?
+                        WHERE id = ?
+                    ");
+                } else {
+                    // For SQLite, we need to explicitly set the updated_at
+                    $addressStmt = $db->prepare("
+                        UPDATE users 
+                        SET phone_number = ?, address = ?, city = ?, country = ?, zip_code = ?, updated_at = datetime('now')
+                        WHERE id = ?
+                    ");
+                }
 
                 $addressStmt->execute([
                     $data['address']['phoneNumber'] ?? '',
