@@ -40,10 +40,10 @@
 
     <!-- Footer Buttons -->
     <div id="footerButtons" style="display: none; border-top: 1px solid #e0e0e0; padding: 16px; display: flex; gap: 12px; justify-content: flex-end;">
-        <a href="<?= BASE_URL ?>/" class="btn btn-outline-secondary" style="padding: 8px 20px; font-size: 14px;">
+        <a href="<?= BASE_URL ?>/" class="btn btn-outline-secondary">
             Continue Shopping
         </a>
-        <a href="<?= BASE_URL ?>/checkout" class="btn btn-primary" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border: none; padding: 8px 20px; font-size: 14px;">
+        <a href="<?= BASE_URL ?>/checkout" class="btn btn-primary">
             Checkout
         </a>
     </div>
