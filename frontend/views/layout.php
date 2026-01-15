@@ -45,7 +45,7 @@ $user = getCurrentUser();
                     <?php endif; ?>
                     <li class="nav-item">
                         <a class="nav-link" href="<?= BASE_URL ?>/cart">
-                            Cart <span class="cart-count" id="cartCount">0</span>
+                            Cart <span class="cart-count d-none" id="cartCount">0</span>
                         </a>
                     </li>
                 </ul>
