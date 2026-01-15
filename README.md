@@ -2,8 +2,6 @@
 
 A modern, full-stack e-commerce application built with **Native PHP** backend and **PHP MVC frontend**, demonstrating professional web development practices.
 
-**Perfect for:** Portfolio projects, technical interviews, and learning full-stack development.
-
 ## 🎯 Architecture Overview
 
 - **Backend:** Native PHP REST API (port 3001) - No frameworks, pure PDO
@@ -156,18 +154,23 @@ After setup, the database is seeded with:
 - Classic Blue T-Shirt ($25)
 - T-Shirt ($30) - Multiple colors
 
-**Colors:** Black, White, Red, Blue, Green, Gray, Navy
-**Sizes:** XS, S, M, L, XL, XXL
+**Colors:**
+
+Black, White, Red, Blue, Green, Gray, Navy
+
+**Sizes:**
+
+XS, S, M, L, XL, XXL
 
 ## 🔄 Workflow
 
 1. **Browse** products on home page
 2. **View** product details and select color/size
 3. **Add to Cart** (stored in localStorage)
-4. **Checkout** as guest or login first
+4. **Login** (required to checkout)
 5. **Apply Coupon** (WELCOME10 or SUMMER20)
 6. **Place Order** with billing address
-7. **Login** to view order history and profile
+7. **View** order history and profile
 
 ## 🔐 Security Features
 
@@ -242,20 +245,9 @@ This project demonstrates:
   - jQuery DOM manipulation
   - AJAX for API communication
 
-## 📝 License
-
-MIT License - See LICENSE file for details
-
 ## 👨‍💻 Author
 
 Created by [Yuki Seno](https://github.com/yukiseno)
-"data": {
-"id": 1,
-"name": "WELCOME10",
-"discount_amount": 10,
-"valid_until": "2026-02-07"
-}
-}
 
 ````
 
@@ -267,7 +259,6 @@ Created by [Yuki Seno](https://github.com/yukiseno)
 ## Configuration
 
 Edit `.env` to configure:
-
 ```env
 DB_TYPE=sqlite                                          # sqlite or mysql
 SQLITE_PATH=/path/to/database.sqlite                   # SQLite path
@@ -277,29 +268,6 @@ DB_USER=root                                           # MySQL user
 DB_PASS=                                               # MySQL password
 API_URL=http://localhost:3001                          # API base URL
 ````
-
-## Database
-
-### Coupons Table
-
-```sql
-CREATE TABLE coupons (
-  id INTEGER PRIMARY KEY,
-  name TEXT UNIQUE,
-  discount INTEGER,
-  valid_until TEXT,
-  created_at TIMESTAMP,
-  updated_at TIMESTAMP
-);
-```
-
-### Sample Data
-
-```sql
-INSERT INTO coupons (name, discount, valid_until) VALUES
-('WELCOME10', 10, '2026-02-07'),
-('SUMMER20', 20, '2026-03-07');
-```
 
 ## Design Decisions
 
@@ -340,9 +308,6 @@ Change `DB_TYPE` in `.env`:
 - `sqlite` - SQLite (default, no setup needed)
 - `mysql` - MySQL (requires DB config)
 
-- `sqlite` - SQLite (default, no setup needed)
-- `mysql` - MySQL (requires DB config)
-
 ## 🧪 Testing Checklist
 
 - [x] Coupon API endpoint responds correctly
@@ -366,14 +331,6 @@ Change `DB_TYPE` in `.env`:
 ```bash
 # Change port number
 php -S localhost:3002 -t public  # Use port 3002 instead
-```
-
-**Database file not found:**
-
-```bash
-# SQLite database is created automatically on first access
-# If issues persist, ensure backend/database/ directory exists
-mkdir -p backend/database
 ```
 
 **CORS errors in browser:**
