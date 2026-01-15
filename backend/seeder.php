@@ -1,10 +1,6 @@
 <?php
 
 require_once __DIR__ . '/classes/Database.php';
-require_once __DIR__ . '/classes/Color.php';
-require_once __DIR__ . '/classes/Size.php';
-require_once __DIR__ . '/classes/Product.php';
-require_once __DIR__ . '/classes/Coupon.php';
 
 $db = Database::getInstance();
 
