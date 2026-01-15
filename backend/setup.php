@@ -168,6 +168,10 @@ try {
         'success' => true,
         'message' => 'Database tables created successfully'
     ]);
+
+    // Now run seeder
+    echo "\n\nRunning seeder...\n";
+    require_once __DIR__ . '/seeder.php';
 } catch (Exception $e) {
     echo json_encode([
         'success' => false,
