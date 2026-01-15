@@ -34,18 +34,21 @@ $user = getCurrentUser();
                             Cart <span class="cart-count" id="cartCount">0</span>
                         </a>
                     </li>
-                    <li class="nav-item" id="profileNav" style="display: none;">
-                        <a class="nav-link" href="<?= BASE_URL ?>/profile">Profile</a>
-                    </li>
-                    <li class="nav-item" id="logoutNav" style="display: none;">
-                        <a class="nav-link" href="#" onclick="logout(); return false;">Logout</a>
-                    </li>
-                    <li class="nav-item" id="loginNav">
-                        <a class="nav-link" href="<?= BASE_URL ?>/login">Login</a>
-                    </li>
-                    <li class="nav-item" id="registerNav">
-                        <a class="nav-link" href="<?= BASE_URL ?>/register">Register</a>
-                    </li>
+                    <?php if (isLoggedIn()): ?>
+                        <li class="nav-item">
+                            <a class="nav-link" href="<?= BASE_URL ?>/profile">Profile</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#" onclick="logout(); return false;">Logout</a>
+                        </li>
+                    <?php else: ?>
+                        <li class="nav-item">
+                            <a class="nav-link" href="<?= BASE_URL ?>/login">Login</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="<?= BASE_URL ?>/register">Register</a>
+                        </li>
+                    <?php endif; ?>
                 </ul>
             </div>
         </div>

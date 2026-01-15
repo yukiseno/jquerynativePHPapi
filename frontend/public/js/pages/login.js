@@ -54,19 +54,15 @@ function setPhpSession(token, user) {
     success: function (response) {
       showAlert("Login successful!", "success");
       setTimeout(() => {
-        updateAuthNav();
-        updateCartCount();
         window.location.href = window.BASE_URL + "/";
-      }, 1000);
+      }, 500);
     },
     error: function () {
       showAlert("Session error", "warning");
       // Still redirect even if session failed
       setTimeout(() => {
-        updateAuthNav();
-        updateCartCount();
         window.location.href = window.BASE_URL + "/";
-      }, 1000);
+      }, 500);
     },
   });
 }
