@@ -50,6 +50,7 @@ function updateCartCount() {
 
 // Auth Management
 function logout() {
+  const token = localStorage.getItem("authToken");
   localStorage.removeItem("authToken");
   localStorage.removeItem("authUser");
 
@@ -57,7 +58,7 @@ function logout() {
   $.ajax({
     url: window.BASE_URL + "/api.php",
     type: "POST",
-    data: { action: "clear_session" },
+    data: { action: "clear_session", token: token },
     complete: function () {
       updateCartCount();
       window.location.href = window.BASE_URL + "/";
