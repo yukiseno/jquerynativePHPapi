@@ -1,111 +1,268 @@
-# Native PHP E-Commerce API
+# jQuery Native PHP E-Commerce
 
-A clean, production-ready e-commerce backend built with **native PHP** (no frameworks) demonstrating modern API design, security best practices, and clean architecture principles.
+A modern, full-stack e-commerce application built with **Native PHP** backend and **PHP MVC frontend**, demonstrating professional web development practices.
 
 **Perfect for:** Portfolio projects, technical interviews, and learning full-stack development.
 
-## 🎯 About This Project
+## 🎯 Architecture Overview
 
-This project showcases a **complete e-commerce API** built from scratch without relying on frameworks, demonstrating:
+- **Backend:** Native PHP REST API (port 3001) - No frameworks, pure PDO
+- **Frontend:** PHP MVC with Server-Side Rendering (port 3000) - Clean URLs, Bootstrap 5
+- **Database:** SQLite (development) / MySQL (production)
+- **Authentication:** JWT tokens + PHP sessions
+- **Styling:** Bootstrap 5.3.0
 
-- Deep understanding of PHP fundamentals and core concepts
-- Professional API design and RESTful conventions
-- Security-first development practices
-- Database abstraction and portability
-- Clean code organization and maintainability
-- Production-ready error handling
+## ✨ Features
 
-Unlike framework-based projects, this shows you understand **what happens under the hood** — essential for senior developer roles.
+### Backend API
 
-## ✨ Key Features
+- ✅ Native PHP - Pure PHP with PDO, no dependencies
+- ✅ JWT Authentication - Secure, stateless token-based auth
+- ✅ RESTful API - Professional HTTP conventions
+- ✅ Product Management - Browse, filter, search
+- ✅ Coupon System - Discount codes with expiry
+- ✅ Order Processing - Complete order flow
+- ✅ Security - Parameterized queries, bcrypt hashing, input validation
 
-- ✅ **Native PHP** - Pure PHP with PDO, no framework dependencies — demonstrates core language expertise
-- ✅ **JWT Authentication** - Secure, stateless token-based authentication for APIs
-- ✅ **Multi-Database Support** - SQLite for development, MySQL for production (true database abstraction)
-- ✅ **Product Management** - Browse, filter, and search with complex queries
-- ✅ **Coupon System** - Discount application with expiry validation and business logic
-- ✅ **RESTful API** - Professional HTTP conventions and status codes
-- ✅ **Security First** - Parameterized queries, bcrypt hashing, input validation, CORS
-- ✅ **Error Handling** - Comprehensive error responses and 404 handling
-- ✅ **Production Ready** - Proper configuration management, logging support
-  📁 Project Structure
+### Frontend
+
+- ✅ PHP MVC Architecture - Clean separation of concerns
+- ✅ Server-Side Authentication - PHP sessions with fallback to JWT
+- ✅ Clean URLs - `/product/slug` instead of `/?page=product`
+- ✅ Responsive Design - Mobile-friendly with Bootstrap
+- ✅ Client-Side Interactions - jQuery for smooth UX
+- ✅ Shopping Cart - localStorage-based cart management
+- ✅ Full Checkout - Address, coupon application, order placement
+
+## 📁 Project Structure
 
 ```
-backend/
-  ├── public/                  # Document root (served to clients)
-  │   └── api/
-  │       └── index.php        # Main API router and handlers
-  ├── classes/                 # Business logic and models
-  │   ├── Database.php         # PDO singleton abstraction
-  │   ├── Coupon.php           # Coupon model and validation
-  │   ├── Product.php          # Product queries and filtering
-  │   └── User.php             # User auth and management
-  ├── database/
-  │   └── database.sqlite      # SQLite database (auto-created)
-  ├── .env                     # Environment configuration
-  ├── .env.example             # Configuration template for developers
-  └── setup.php                # Database initialization script
-
-frontend/
-  ├── index.html               # Home page with product listing
-  ├── product.html             # Product details page
-  ├── cart.html                # Shopping cart management
-  ├── checkout.html            # Checkout with coupon application
-  ├── login.html               # User authentication
-  ├── register.html            # User registration
-  └── test-coupon.html         # API testing tool
+jquerynativePHPapi/
+├── backend/                    # REST API
+│   ├── public/
+│   │   └── api/
+│   │       └── index.php       # Main API router
+│   ├── classes/
+│   │   ├── Database.php        # PDO singleton
+│   │   ├── Product.php         # Product queries
+│   │   ├── User.php            # User auth
+│   │   ├── Coupon.php          # Coupon logic
+│   │   └── Order.php           # Order processing
+│   ├── database/
+│   │   └── .gitkeep            # Database directory
+│   ├── setup.php               # Initialize database + seed data
+│   ├── seeder.php              # Add/update seed data
+│   └── .env                    # Environment config
+│
+├── frontend/                   # PHP MVC Application
+│   ├── index.php               # Main router
+│   ├── config/
+│   │   └── app.php             # Global config & helpers
+│   ├── controllers/            # Page controllers
+│   │   ├── HomeController.php
+│   │   ├── ProductController.php
+│   │   ├── LoginController.php
+│   │   ├── RegisterController.php
+│   │   ├── CartController.php
+│   │   ├── ProfileController.php
+│   │   ├── OrdersController.php
+│   │   └── CheckoutController.php
+│   ├── models/                 # Business logic
+│   │   ├── ApiClient.php       # REST API client
+│   │   ├── Product.php
+│   │   ├── User.php
+│   │   └── Coupon.php
+│   ├── views/                  # HTML templates
+│   │   ├── layout.php          # Master layout
+│   │   ├── home.php
+│   │   ├── product.php
+│   │   ├── login.php
+│   │   ├── register.php
+│   │   ├── cart.php
+│   │   ├── profile.php
+│   │   ├── orders.php
+│   │   ├── checkout.php
+│   │   ├── 404.php
+│   │   └── ...
+│   ├── public/
+│   │   ├── css/
+│   │   │   └── style.css
+│   │   ├── js/
+│   │   │   ├── app.js          # Global utilities
+│   │   │   └── pages/          # Page-specific JS
+│   │   └── images/
+│   ├── api.php                 # PHP session AJAX handler
+│   └── ...
+│
+├── start.sh                    # Start both servers
+├── README.md
+└── ...
 ```
 
-**Design rationale:** The `public/` folder serves as the document root, keeping sensitive files (classes, database config) outside the web-accessible directory — a security best practice.── register.html # Registration page
+## 🚀 Quick Start
 
-````
-
-## Quick Start
-
-### 1. Backend Setup
+### 1. Clone & Setup
 
 ```bash
+git clone https://github.com/yukiseno/jquerynativePHPapi.git
+cd jquerynativePHPapi
+
+# Create database and seed data
 cd backend
-
-# Start PHP development server (port 3001)
-php -S localhost:3001 -t public
-````
-
-### 2. Frontend Setup
-
-```bash
-# Open frontend in browser (in a new terminal)
-cd frontend
-npx http-server -p 3000
-# Navigate to http://localhost:3000
+php setup.php
+cd ..
 ```
 
-## API Endpoints
+### 2. Start Both Servers
+
+```bash
+./start.sh
+```
+
+This starts:
+
+- **Frontend:** http://localhost:3000
+- **Backend API:** http://localhost:3001
+
+Or manually in separate terminals:
+
+```bash
+# Terminal 1: Backend
+cd backend
+php -S localhost:3001 -t public
+
+# Terminal 2: Frontend
+cd frontend
+php -S localhost:3000
+```
+
+### 3. Access the Application
+
+- **Home:** http://localhost:3000 (browse products)
+- **Product:** http://localhost:3000/product/classic-red-t-shirt
+- **Cart:** http://localhost:3000/cart
+- **Checkout:** http://localhost:3000/checkout
+- **Login:** http://localhost:3000/login
+- **Register:** http://localhost:3000/register
+
+## 🧪 Test Data
+
+After setup, the database is seeded with:
+
+**Coupons:**
+
+- `WELCOME10` - 10% discount
+- `SUMMER20` - 20% discount
+
+**Products:**
+
+- Classic Red T-Shirt ($25)
+- Classic Green T-Shirt ($25)
+- Classic Blue T-Shirt ($25)
+- T-Shirt ($30) - Multiple colors
+
+**Colors:** Black, White, Red, Blue, Green, Gray, Navy
+**Sizes:** XS, S, M, L, XL, XXL
+
+## 🔄 Workflow
+
+1. **Browse** products on home page
+2. **View** product details and select color/size
+3. **Add to Cart** (stored in localStorage)
+4. **Checkout** as guest or login first
+5. **Apply Coupon** (WELCOME10 or SUMMER20)
+6. **Place Order** with billing address
+7. **Login** to view order history and profile
+
+## 🔐 Security Features
+
+- JWT token-based API authentication
+- PHP session-based frontend authentication
+- Parameterized SQL queries (prevent SQL injection)
+- Bcrypt password hashing
+- Input validation and sanitization
+- CORS-aware API design
+- Secure session handling with token refresh
+
+## 📊 API Endpoints
+
+### Products
+
+```
+GET  /api/products                    # List all products
+GET  /api/product/{slug}/slug         # Get product by slug
+GET  /api/product/{id}                # Get product by ID
+```
+
+### Authentication
+
+```
+POST /api/user/register               # Create account
+POST /api/user/login                  # Get JWT token
+GET  /api/user/profile                # Get user info (requires token)
+POST /api/user/profile/update         # Update profile
+```
+
+### Orders
+
+```
+POST /api/orders/store                # Place order
+GET  /api/user/orders                 # Get user orders
+GET  /api/orders/{id}                 # Get order details
+```
 
 ### Coupons
 
-**Apply Coupon**
-
 ```
-POST /api/apply/coupon
-Content-Type: application/json
+POST /api/apply/coupon                # Apply discount code
+```
 
-{
-  "coupon_code": "WELCOME10"
+## 💡 Key Technologies
+
+| Layer          | Technology                          |
+| -------------- | ----------------------------------- |
+| Backend API    | Native PHP 7.4+, PDO                |
+| Frontend       | PHP 7.4+, Bootstrap 5.3, jQuery 3.6 |
+| Database       | SQLite (dev), MySQL (prod)          |
+| Authentication | JWT + PHP Sessions                  |
+| Styling        | Bootstrap 5.3.0 CDN                 |
+
+## 🎓 Learning Outcomes
+
+This project demonstrates:
+
+- **Backend:**
+
+  - Native PHP without frameworks
+  - RESTful API design
+  - JWT authentication
+  - Database abstraction with PDO
+  - Error handling and security
+
+- **Frontend:**
+  - Server-side rendering with PHP MVC
+  - Clean URL routing
+  - Client-side state management (localStorage)
+  - Bootstrap responsive design
+  - jQuery DOM manipulation
+  - AJAX for API communication
+
+## 📝 License
+
+MIT License - See LICENSE file for details
+
+## 👨‍💻 Author
+
+Created by [Yuki Seno](https://github.com/yukiseno)
+"data": {
+"id": 1,
+"name": "WELCOME10",
+"discount_amount": 10,
+"valid_until": "2026-02-07"
+}
 }
 
-Response:
-{
-  "success": true,
-  "message": "Coupon applied successfully",
-  "data": {
-    "id": 1,
-    "name": "WELCOME10",
-    "discount_amount": 10,
-    "valid_until": "2026-02-07"
-  }
-}
-```
+````
 
 **Test Coupons:**
 
@@ -124,7 +281,7 @@ DB_NAME=ecommerce                                      # MySQL database
 DB_USER=root                                           # MySQL user
 DB_PASS=                                               # MySQL password
 API_URL=http://localhost:3001                          # API base URL
-```
+````
 
 ## Database
 
