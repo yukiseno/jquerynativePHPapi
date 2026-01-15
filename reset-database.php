@@ -11,7 +11,7 @@
 
 // Determine database path
 $projectRoot = dirname(__FILE__);
-$dbPath = $projectRoot . '/backend/database/ecommerce.db';
+$dbPath = $projectRoot . '/backend/database/database.sqlite';
 
 // Delete existing database file
 if (file_exists($dbPath)) {
