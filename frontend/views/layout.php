@@ -19,20 +19,14 @@ $user = getCurrentUser();
         <div class="container">
             <a class="navbar-brand fw-bold" href="<?= BASE_URL ?>">
                 <img src="/images/logo.svg" alt="<?= APP_NAME ?>" height="24" class="me-2" />
-                <?= APP_NAME ?>
             </a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                 <span class="navbar-toggler-icon"></span>
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav ms-auto">
+                <ul class="navbar-nav">
                     <li class="nav-item">
                         <a class="nav-link" href="<?= BASE_URL ?>">Home</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="<?= BASE_URL ?>/cart">
-                            Cart <span class="cart-count" id="cartCount">0</span>
-                        </a>
                     </li>
                     <?php if (isLoggedIn()): ?>
                         <li class="nav-item">
@@ -49,6 +43,11 @@ $user = getCurrentUser();
                             <a class="nav-link" href="<?= BASE_URL ?>/register">Register</a>
                         </li>
                     <?php endif; ?>
+                    <li class="nav-item">
+                        <a class="nav-link" href="<?= BASE_URL ?>/cart">
+                            Cart <span class="cart-count" id="cartCount">0</span>
+                        </a>
+                    </li>
                 </ul>
             </div>
         </div>
@@ -72,13 +71,6 @@ $user = getCurrentUser();
         }
         ?>
     </div>
-
-    <!-- Footer -->
-    <footer class="bg-light py-4 mt-5">
-        <div class="container text-center text-muted">
-            <p>&copy; 2026 <?= APP_NAME ?>. All rights reserved.</p>
-        </div>
-    </footer>
 
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
