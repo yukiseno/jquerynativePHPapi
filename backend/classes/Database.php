@@ -23,6 +23,10 @@ class Database
 
         if ($dbType === 'sqlite') {
             $dbPath = getenv('SQLITE_PATH') ?: __DIR__ . '/../database/database.sqlite';
+            // Resolve relative paths relative to backend directory
+            if (!file_exists($dbPath) && !str_starts_with($dbPath, '/')) {
+                $dbPath = __DIR__ . '/../' . $dbPath;
+            }
             $this->connection = new PDO('sqlite:' . $dbPath);
         } else {
             $host = getenv('DB_HOST') ?: 'localhost';
