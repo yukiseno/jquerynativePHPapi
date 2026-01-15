@@ -117,12 +117,32 @@ try {
     }
     echo " ✓\n";
 
+    // Seed users
+    echo "📍 Seeding users...";
+    $users = [
+        [
+            'name' => 'Test User',
+            'email' => 'user@test.com',
+            'password' => 'password1234',
+        ],
+    ];
+
+    foreach ($users as $user) {
+        $hashedPassword = password_hash($user['password'], PASSWORD_BCRYPT);
+        $stmt = $db->prepare("INSERT OR IGNORE INTO users (name, email, password) VALUES (?, ?, ?)");
+        $stmt->execute([$user['name'], $user['email'], $hashedPassword]);
+    }
+    echo " ✓\n";
+
     echo "\n✅ Database seeded successfully!\n\n";
     echo "📊 Seeded Data:\n";
     echo "   • Colors: " . count($colors) . "\n";
     echo "   • Sizes: " . count($sizes) . "\n";
     echo "   • Coupons: " . count($coupons) . "\n";
     echo "   • Products: " . count($products) . "\n";
+    echo "   • Users: " . count($users) . "\n";
+    echo "\n👤 Test Account:\n";
+    echo "   • Email: user@test.com | Password: password1234\n";
 } catch (Exception $e) {
     echo "\n❌ Error: " . $e->getMessage() . "\n";
     exit(1);
