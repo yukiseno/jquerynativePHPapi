@@ -139,11 +139,6 @@ php -S localhost:3000
 ### 3. Access the Application
 
 - **Home:** http://localhost:3000 (browse products)
-- **Product:** http://localhost:3000/product/classic-red-t-shirt
-- **Cart:** http://localhost:3000/cart
-- **Checkout:** http://localhost:3000/checkout
-- **Login:** http://localhost:3000/login
-- **Register:** http://localhost:3000/register
 
 ## 🧪 Test Data
 
@@ -306,18 +301,6 @@ INSERT INTO coupons (name, discount, valid_until) VALUES
 ('SUMMER20', 20, '2026-03-07');
 ```
 
-## Testing
-
-### Test Coupon Endpoint
-
-Open `frontend/test-coupon.html` in browser or use curl:
-
-```bash
-curl -X POST http://localhost:3001/api/apply/coupon \
-  -H "Content-Type: application/json" \
-  -d '{"coupon_code":"WELCOME10"}'
-```
-
 ## Design Decisions
 
 ### Why Native PHP?
@@ -359,49 +342,6 @@ Change `DB_TYPE` in `.env`:
 
 - `sqlite` - SQLite (default, no setup needed)
 - `mysql` - MySQL (requires DB config)
-
-## 💡 Interview Talking Points
-
-### When discussing this project, highlight:
-
-**1. Why Native PHP?**
-
-- "I chose native PHP to demonstrate deep understanding of core concepts without framework abstractions"
-- "Shows I can debug and understand what's happening at every level"
-- "Perfect for an intermediate-to-senior role where you need to understand fundamentals"
-
-**2. Architecture & Design Decisions**
-
-- "Used PDO singleton for database abstraction — easily switch between SQLite and MySQL"
-- "Kept sensitive files outside the document root (`public/`) for security"
-- "Implemented proper error handling with meaningful HTTP status codes"
-- "Separated concerns: routing in API, business logic in classes"
-
-**3. Security Implementation**
-
-- "All database queries use parameterized statements to prevent SQL injection"
-- "Passwords hashed with bcrypt and automatic salting"
-- "CORS headers configured for safe cross-origin requests"
-- "Email validation before database insertion"
-
-**4. What You Can Explain in Detail**
-
-- How the PDO singleton works and why it's useful
-- The flow from HTTP request → router → model → database → JSON response
-- Why you chose the project structure
-- How to switch databases with just one `.env` change
-- Security best practices demonstrated in the code
-
-### Questions You Might Get:
-
-**Q: "How would you scale this?"**
-A: "Move to a framework like Laravel for middleware, caching layers, and queue workers. But first I'd add Redis for session management, implement database connection pooling, and add API rate limiting."
-
-**Q: "How would you handle N+1 queries?"**
-A: "I'd use eager loading patterns, add query optimization in Product::getAll(), and implement caching for frequently accessed data."
-
-**Q: "What about testing?"**
-A: "I'd implement PHPUnit for unit tests on models, integration tests for API endpoints, and use mock databases for testing."
 
 ## 🧪 Testing Checklist
 
