@@ -211,9 +211,6 @@ function placeOrder() {
       const billingAddress = { phoneNumber, address, city, country, zip };
       localStorage.setItem("billingAddress", JSON.stringify(billingAddress));
 
-      // Save order to localStorage
-      localStorage.setItem("lastOrder", JSON.stringify(response.data));
-
       // Clear cart and coupon
       localStorage.removeItem("cart");
       localStorage.removeItem("appliedDiscount");
