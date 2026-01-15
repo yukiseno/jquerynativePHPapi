@@ -21,7 +21,7 @@ if (strpos($path, $basePath) === 0) {
 
 // Extract page and parameters from path
 $pageParts = explode('/', filter_var($path, FILTER_SANITIZE_URL));
-$page = $pageParts[0] ?? '/';
+$page = !empty($pageParts[0]) ? $pageParts[0] : 'home';
 $param = $pageParts[1] ?? null;
 
 // Support both clean URLs and query string
@@ -62,11 +62,10 @@ if (file_exists($controllerFile)) {
         $data = ['error' => 'Controller not found'];
     }
 } else {
-    // Default to home if page doesn't exist
-    require_once __DIR__ . '/controllers/HomeController.php';
-    $controller = new HomeController();
-    $data = $controller->index();
-    $page = 'home';
+    // Show 404 for non-existent pages
+    http_response_code(404);
+    $data = ['error' => 'Page not found'];
+    $page = '404';
 }
 
 // Load base layout with view
