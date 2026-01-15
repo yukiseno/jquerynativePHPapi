@@ -207,13 +207,9 @@ function placeOrder() {
     },
     data: JSON.stringify(orderData),
     success: function (response) {
-      // Save billing address for next shopping
-      const billingAddress = { phoneNumber, address, city, country, zip };
-      localStorage.setItem("billingAddress", JSON.stringify(billingAddress));
-
       // Clear cart and coupon
       localStorage.removeItem("cart");
-      localStorage.removeItem("appliedDiscount");
+      localStorage.removeItem("appliedCoupon");
       appliedCoupon = null;
 
       showAlert("Order placed successfully!", "success");
