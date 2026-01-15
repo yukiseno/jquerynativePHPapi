@@ -234,13 +234,28 @@ function placeOrder() {
 }
 
 function loadBillingAddress() {
-  const billingAddress =
-    JSON.parse(localStorage.getItem("billingAddress")) || {};
-  $("#phoneNumber").val(billingAddress.phoneNumber || "");
-  $("#address").val(billingAddress.address || "");
-  $("#city").val(billingAddress.city || "");
-  $("#country").val(billingAddress.country || "");
-  $("#zip").val(billingAddress.zip || "");
+  const token = localStorage.getItem("authToken");
+
+  $.ajax({
+    url: window.API_URL + "/user/profile",
+    type: "GET",
+    headers: {
+      Authorization: "Bearer " + token,
+    },
+    success: function (response) {
+      if (response.success && response.data) {
+        const user = response.data;
+        $("#phoneNumber").val(user.phone_number || "");
+        $("#address").val(user.address || "");
+        $("#city").val(user.city || "");
+        $("#country").val(user.country || "");
+        $("#zip").val(user.zip_code || "");
+      }
+    },
+    error: function () {
+      // Silent fail - fields will be empty
+    },
+  });
 }
 
 // Load applied coupon from localStorage

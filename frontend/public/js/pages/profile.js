@@ -11,19 +11,17 @@ $(document).ready(function () {
 
 function loadProfile() {
   const user = JSON.parse(localStorage.getItem("authUser")) || {};
-  const billingAddress =
-    JSON.parse(localStorage.getItem("billingAddress")) || {};
 
   // Display user info
   $("#userName").text(user.name || "");
   $("#userEmail").text(user.email || "");
 
-  // Load address info
-  $("#phoneNumber").val(user.phone_number || billingAddress.phoneNumber || "");
-  $("#address").val(user.address || billingAddress.address || "");
-  $("#city").val(user.city || billingAddress.city || "");
-  $("#country").val(user.country || billingAddress.country || "");
-  $("#zip").val(user.zip_code || billingAddress.zip || "");
+  // Load address info from localStorage (if already set)
+  $("#phoneNumber").val(user.phone_number || "");
+  $("#address").val(user.address || "");
+  $("#city").val(user.city || "");
+  $("#country").val(user.country || "");
+  $("#zip").val(user.zip_code || "");
 }
 
 function updateProfile() {
@@ -56,17 +54,7 @@ function updateProfile() {
     },
     data: JSON.stringify(profileData),
     success: function (response) {
-      // Update localStorage with new address
-      const billingAddress = {
-        phoneNumber,
-        address,
-        city,
-        country,
-        zip,
-      };
-      localStorage.setItem("billingAddress", JSON.stringify(billingAddress));
-
-      // Update authUser with new info
+      // Update authUser with new info in localStorage
       const user = JSON.parse(localStorage.getItem("authUser")) || {};
       user.phone_number = phoneNumber;
       user.address = address;
