@@ -53,17 +53,20 @@ function renderOrderSummary() {
   updateOrderTotal(subtotal, discount);
 }
 
-function updateOrderTotal(subtotal, discount = 0) {
+function updateOrderTotal(subtotal, discountPercent = 0) {
   // Convert from cents to dollars (subtotal is in cents)
   const subtotalDollars = subtotal / 100;
-  const total = subtotalDollars - discount / 100;
+
+  // discountPercent is the percentage (e.g., 10 for 10%, 20 for 20%)
+  const discountAmount = (subtotalDollars * discountPercent) / 100;
+  const total = subtotalDollars - discountAmount;
 
   $("#subtotal").text("$" + subtotalDollars.toFixed(2));
-  $("#discount").text("-$" + (discount / 100).toFixed(2));
+  $("#discount").text("-$" + discountAmount.toFixed(2));
   $("#total").text("$" + total.toFixed(2));
 
   // Always hide discount row if no discount
-  if (discount > 0) {
+  if (discountPercent > 0) {
     $("#discountRow").removeClass("d-none");
   } else {
     $("#discountRow").addClass("d-none");
@@ -96,10 +99,20 @@ function applyCoupon() {
         appliedCoupon = response.data;
         // Save coupon to localStorage
         localStorage.setItem("appliedCoupon", JSON.stringify(response.data));
+
+        // Calculate discount amount based on percentage
+        const cart = JSON.parse(localStorage.getItem("cart")) || [];
+        let subtotal = 0;
+        cart.forEach((item) => (subtotal += item.price * item.quantity));
+
+        // discount_amount is the percentage (e.g., 10 for 10%, 20 for 20%)
+        const discountPercent = response.data.discount_amount;
+        const discountDollars = (subtotal * discountPercent) / 100 / 100; // Convert cents to dollars
+
         showCouponMessage(
-          `Coupon "${couponCode}" applied! Discount: $${(
-            response.data.discount_amount / 100
-          ).toFixed(2)}`,
+          `Coupon "${couponCode}" applied! Discount: ${discountPercent}% ($${discountDollars.toFixed(
+            2
+          )})`,
           "success"
         );
         // Update UI - show remove button, disable input
@@ -108,9 +121,6 @@ function applyCoupon() {
         $("#removeCouponBtn").show();
 
         // Update order total with discount
-        const cart = JSON.parse(localStorage.getItem("cart")) || [];
-        let subtotal = 0;
-        cart.forEach((item) => (subtotal += item.price * item.quantity));
         updateOrderTotal(subtotal, response.data.discount_amount);
       }
     },
