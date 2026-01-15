@@ -7,6 +7,18 @@ class Database
 
     private function __construct()
     {
+        // Load .env file
+        $envFile = __DIR__ . '/../.env';
+        if (file_exists($envFile)) {
+            $lines = file($envFile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+            foreach ($lines as $line) {
+                if (strpos($line, '=') !== false && $line[0] !== '#') {
+                    list($key, $value) = explode('=', $line, 2);
+                    putenv(trim($key) . '=' . trim($value));
+                }
+            }
+        }
+
         $dbType = getenv('DB_TYPE') ?: 'sqlite';
 
         if ($dbType === 'sqlite') {
