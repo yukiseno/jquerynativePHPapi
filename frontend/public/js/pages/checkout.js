@@ -56,11 +56,9 @@ function renderOrderSummary() {
 function updateOrderTotal(subtotal, discount = 0) {
   // Convert from cents to dollars (subtotal is in cents)
   const subtotalDollars = subtotal / 100;
-  const tax = subtotalDollars * 0.1;
-  const total = subtotalDollars + tax - discount / 100;
+  const total = subtotalDollars - discount / 100;
 
   $("#subtotal").text("$" + subtotalDollars.toFixed(2));
-  $("#tax").text("$" + tax.toFixed(2));
   $("#discount").text("-$" + (discount / 100).toFixed(2));
   $("#total").text("$" + total.toFixed(2));
 

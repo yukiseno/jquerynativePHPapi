@@ -72,10 +72,6 @@
                         <span>Subtotal:</span>
                         <span id="subtotal">$0.00</span>
                     </div>
-                    <div class="d-flex justify-content-between mb-2">
-                        <span>Tax (10%):</span>
-                        <span id="tax">$0.00</span>
-                    </div>
                     <div class="d-flex justify-content-between mb-2 d-none" id="discountRow">
                         <span>Discount:</span>
                         <span id="discount" class="text-success">-$0.00</span>
