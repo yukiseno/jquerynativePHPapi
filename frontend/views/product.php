@@ -91,7 +91,6 @@ $statusClass = $product['status'] == 1 ? 'bg-success' : 'bg-danger';
                 class="form-control"
                 value="1"
                 min="1"
-                max="<?= $product['qty'] ?? 999 ?>"
                 style="max-width: 100px" />
         </div>
 
