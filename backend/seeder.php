@@ -111,7 +111,7 @@ try {
             $size = $sizeStmt->fetch(PDO::FETCH_ASSOC);
             if ($size) {
                 $db->insertIgnore('product_size', ['product_id' => null, 'size_id' => null], [$productId, $size['id']]);
-            }            }
+            }
         }
     }
     echo " ✓\n";

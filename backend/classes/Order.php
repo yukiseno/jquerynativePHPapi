@@ -110,7 +110,7 @@ class Order
                 $city = $data['address']['city'] ?? '';
                 $country = $data['address']['country'] ?? '';
                 $zipCode = $data['address']['zip'] ?? '';
-                $timestampFunc = $this->getDatetimeFunction();
+                $timestampFunc = self::getDatetimeFunction();
 
                 $addressStmt = $db->prepare("
                     UPDATE users 
