@@ -104,13 +104,15 @@ function addProductToCart() {
 document.addEventListener("DOMContentLoaded", function () {
   // currentProduct is set from PHP in the view
 
-  // Add quantity change listener
-  document
-    .getElementById("quantity")
-    ?.addEventListener("change", checkFormValidity);
-  document
-    .getElementById("quantity")
-    ?.addEventListener("input", checkFormValidity);
+  // Get quantity input
+  const quantityInput = document.getElementById("quantity");
+
+  // Add quantity change listeners
+  if (quantityInput) {
+    // The 'change' event fires when spinners are clicked or value is changed
+    quantityInput.addEventListener("change", checkFormValidity);
+    quantityInput.addEventListener("input", checkFormValidity);
+  }
 
   updateCartCount();
 });
