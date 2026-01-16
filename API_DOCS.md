@@ -294,7 +294,7 @@ Get specific product with all details.
 
 #### Apply Coupon
 
-**POST** `/coupon/apply`
+**POST** `/apply/coupon`
 
 Apply a coupon code to get discount information.
 
@@ -341,7 +341,7 @@ Apply a coupon code to get discount information.
 
 #### Create Order
 
-**POST** `/orders`
+**POST** `/orders/store`
 
 Create a new order with cart items and delivery address.
 
@@ -525,7 +525,7 @@ curl -X POST http://localhost:3001/api/user/login \
 curl -X GET http://localhost:3001/api/products
 
 # Apply coupon
-curl -X POST http://localhost:3001/api/coupon/apply \
+curl -X POST http://localhost:3001/api/apply/coupon \
   -H "Content-Type: application/json" \
   -d '{"coupon_code":"WELCOME10"}'
 ```
