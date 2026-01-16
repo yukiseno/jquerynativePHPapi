@@ -58,15 +58,19 @@ function updateCartCount() {
 // Auth Management
 function logout() {
   const token = localStorage.getItem("authToken");
-  localStorage.removeItem("authToken");
-  localStorage.removeItem("authUser");
 
-  // Clear PHP session
+  // Call frontend api.php to clear session
   $.ajax({
     url: window.BASE_URL + "/api.php",
     type: "POST",
-    data: { action: "clear_session", token: token },
+    data: {
+      action: "clear_session",
+      token: token,
+    },
     complete: function () {
+      // Clear frontend storage
+      localStorage.removeItem("authToken");
+      localStorage.removeItem("authUser");
       updateCartCount();
       window.location.href = window.BASE_URL + "/";
     },

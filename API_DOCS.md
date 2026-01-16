@@ -8,19 +8,287 @@ http://localhost:3001/api
 
 ## Authentication
 
-Currently, the API supports two authentication methods:
+The API uses Bearer Token authentication for protected endpoints.
 
-### 1. No Authentication
+### Protected Endpoints
 
-Most endpoints are public and don't require authentication.
-
-### 2. Bearer Token (for protected endpoints)
+Endpoints requiring authentication use Bearer tokens in the Authorization header:
 
 ```
-Authorization: Bearer {token}
+Authorization: Bearer {access_token}
+```
+
+### Public Endpoints
+
+These endpoints don't require authentication:
+
+- `GET /products` - List products
+- `POST /user/register` - Register new user
+- `POST /user/login` - Login user
+- `POST /apply/coupon` - Apply coupon code
+
+## Response Format
+
+All responses are JSON with the following structure:
+
+**Success Response:**
+
+```json
+{
+  "success": true,
+  "message": "Operation successful",
+  "data": {}
+}
+```
+
+**Error Response:**
+
+```json
+{
+  "success": false,
+  "error": "Error description"
+}
 ```
 
 ## Endpoints
+
+### Authentication
+
+#### Register User
+
+**POST** `/user/register`
+
+Create a new user account.
+
+**Request:**
+
+```json
+{
+  "name": "John Doe",
+  "email": "john@example.com",
+  "password": "password123"
+}
+```
+
+**Success Response (201):**
+
+```json
+{
+  "success": true,
+  "message": "User registered successfully",
+  "data": {
+    "id": 1,
+    "name": "John Doe",
+    "email": "john@example.com",
+    "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+  }
+}
+```
+
+**Error Response (400):**
+
+```json
+{
+  "success": false,
+  "error": "Email already exists"
+}
+```
+
+#### Login User
+
+**POST** `/user/login`
+
+Authenticate user and get access token.
+
+**Request:**
+
+```json
+{
+  "email": "john@example.com",
+  "password": "password123"
+}
+```
+
+**Success Response (200):**
+
+```json
+{
+  "success": true,
+  "message": "Login successful",
+  "data": {
+    "id": 1,
+    "name": "John Doe",
+    "email": "john@example.com",
+    "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+    "profile_completed": 0
+  }
+}
+```
+
+**Error Response (401):**
+
+```json
+{
+  "success": false,
+  "error": "Invalid email or password"
+}
+```
+
+#### Logout User
+
+**POST** `/user/logout`
+
+Revoke user's access token.
+
+**Headers:**
+
+```
+Authorization: Bearer {access_token}
+```
+
+**Success Response (200):**
+
+```json
+{
+  "success": true,
+  "message": "Logged out successfully"
+}
+```
+
+#### Get User Profile
+
+**GET** `/user/profile`
+
+Get current authenticated user's profile information.
+
+**Headers:**
+
+```
+Authorization: Bearer {access_token}
+```
+
+**Success Response (200):**
+
+```json
+{
+  "success": true,
+  "data": {
+    "id": 1,
+    "name": "John Doe",
+    "email": "john@example.com",
+    "phone_number": "555-1234",
+    "address": "123 Main St",
+    "city": "New York",
+    "country": "USA",
+    "zip_code": "10001",
+    "profile_completed": 1
+  }
+}
+```
+
+#### Update User Profile
+
+**PUT** `/user/profile/update`
+
+Update user's profile information (address, phone, etc.).
+
+**Headers:**
+
+```
+Authorization: Bearer {access_token}
+Content-Type: application/json
+```
+
+**Request:**
+
+```json
+{
+  "phone_number": "555-1234",
+  "address": "123 Main St",
+  "city": "New York",
+  "country": "USA",
+  "zip_code": "10001"
+}
+```
+
+**Success Response (200):**
+
+```json
+{
+  "success": true,
+  "message": "Profile updated successfully",
+  "data": {
+    /* updated user data */
+  }
+}
+```
+
+### Products
+
+#### List All Products
+
+**GET** `/products`
+
+Get all products with available colors and sizes.
+
+**Response (200):**
+
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": 1,
+      "name": "Product Name",
+      "description": "Product description",
+      "slug": "product-name",
+      "thumbnail": "/images/product.jpg",
+      "price": 2999,
+      "created_at": "2026-01-16 10:00:00",
+      "colors": [
+        { "id": 1, "name": "Black" },
+        { "id": 2, "name": "White" }
+      ],
+      "sizes": [
+        { "id": 1, "name": "S" },
+        { "id": 2, "name": "M" }
+      ]
+    }
+  ],
+  "colors": [{ "id": 1, "name": "Black", "created_at": "2026-01-16 10:00:00" }],
+  "sizes": [{ "id": 1, "name": "S", "created_at": "2026-01-16 10:00:00" }]
+}
+```
+
+#### Get Product Details
+
+**GET** `/products/{id}`
+
+Get specific product with all details.
+
+**Response (200):**
+
+```json
+{
+  "success": true,
+  "data": {
+    "id": 1,
+    "name": "T-Shirt",
+    "description": "Comfortable cotton t-shirt",
+    "slug": "t-shirt",
+    "thumbnail": "/images/tshirt.jpg",
+    "price": 1999,
+    "colors": [
+      { "id": 1, "name": "Black" },
+      { "id": 2, "name": "White" }
+    ],
+    "sizes": [
+      { "id": 1, "name": "XS" },
+      { "id": 2, "name": "S" }
+    ]
+  }
+}
+```
 
 ### Coupons
 
@@ -46,9 +314,9 @@ Apply a coupon code to get discount information.
   "message": "Coupon applied successfully",
   "data": {
     "id": 1,
-    "name": "WELCOME10",
+    "code": "WELCOME10",
     "discount_amount": 10,
-    "valid_until": "2026-02-07"
+    "valid_until": "2026-03-16"
   }
 }
 ```
@@ -57,79 +325,169 @@ Apply a coupon code to get discount information.
 
 ```json
 {
+  "success": false,
   "error": "Invalid or expired coupon"
 }
 ```
 
-**Status Codes:**
-
-- `200` - Coupon applied successfully
-- `400` - Invalid or expired coupon
-- `500` - Server error
-
-**Example:**
-
-```bash
-curl -X POST http://localhost:3001/api/apply/coupon \
-  -H "Content-Type: application/json" \
-  -d '{"coupon_code":"WELCOME10"}'
-```
-
 #### Available Test Coupons
 
-| Code      | Discount | Valid Until |
-| --------- | -------- | ----------- |
-| WELCOME10 | 10       | 2026-02-07  |
-| SUMMER20  | 20       | 2026-03-07  |
+| Code      | Discount | Validity |
+| --------- | -------- | -------- |
+| WELCOME10 | 10%      | Valid for 1 month from seed date |
+| SUMMER20  | 20%      | Valid for 2 months from seed date |
 
-### Error Responses
+### Orders
 
-All errors follow this format:
+#### Create Order
+
+**POST** `/orders/store`
+
+Create a new order with cart items and delivery address.
+
+**Headers:**
+
+```
+Authorization: Bearer {access_token}
+```
+
+**Request:**
 
 ```json
 {
-  "error": "Error message describing what went wrong"
+  "cartItems": [
+    {
+      "id": 1,
+      "name": "T-Shirt",
+      "price": 1999,
+      "quantity": 2,
+      "colorId": 1,
+      "colorName": "Black",
+      "sizeId": 1,
+      "sizeName": "M"
+    }
+  ],
+  "address": {
+    "phoneNumber": "555-1234",
+    "address": "123 Main St",
+    "city": "New York",
+    "country": "USA",
+    "zip": "10001"
+  },
+  "couponId": 1
 }
 ```
 
-Common error messages:
+**Success Response (201):**
 
-- `"Coupon code is required"` - Missing coupon_code parameter
-- `"Invalid or expired coupon"` - Coupon not found or expired
-- `"Server error: ..."` - Internal server error
+```json
+{
+  "success": true,
+  "message": "Order created successfully",
+  "data": {
+    "order": {
+      "id": 1,
+      "user_id": 1,
+      "subtotal": 3998,
+      "discount_total": 399,
+      "total": 3599,
+      "status": "paid",
+      "created_at": "2026-01-16 10:00:00"
+    },
+    "items": [
+      {
+        "id": 1,
+        "product_name": "T-Shirt",
+        "color_name": "Black",
+        "size_name": "M",
+        "qty": 2,
+        "price": 1999,
+        "subtotal": 3998
+      }
+    ]
+  }
+}
+```
 
-## Response Format
+#### Get User's Orders
 
-All responses are JSON:
+**GET** `/orders`
 
-- `success` (boolean) - Whether the request was successful
-- `message` (string) - Human-readable message
-- `data` (object) - Response data (structure varies by endpoint)
-- `error` (string) - Error message (only in error responses)
+Get all orders for authenticated user.
 
-## HTTP Methods
+**Headers:**
 
-- `GET` - Retrieve data
-- `POST` - Create/apply data
-- `PUT` - Update data (reserved for future use)
-- `DELETE` - Delete data (reserved for future use)
+```
+Authorization: Bearer {access_token}
+```
 
-## Status Codes
+**Response (200):**
+
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": 1,
+      "subtotal": 3998,
+      "discount_total": 399,
+      "total": 3599,
+      "status": "paid",
+      "created_at": "2026-01-16 10:00:00"
+    }
+  ]
+}
+```
+
+#### Get Order Details
+
+**GET** `/orders/{id}`
+
+Get specific order with all items.
+
+**Headers:**
+
+```
+Authorization: Bearer {access_token}
+```
+
+**Response (200):**
+
+```json
+{
+  "success": true,
+  "data": {
+    "order": {
+      "id": 1,
+      "user_id": 1,
+      "subtotal": 3998,
+      "discount_total": 399,
+      "total": 3599,
+      "status": "paid",
+      "created_at": "2026-01-16 10:00:00"
+    },
+    "items": [
+      {
+        "id": 1,
+        "product_name": "T-Shirt",
+        "color_name": "Black",
+        "size_name": "M",
+        "qty": 2,
+        "price": 1999
+      }
+    ]
+  }
+}
+```
+
+## HTTP Status Codes
 
 - `200` - OK: Request succeeded
 - `201` - Created: Resource created successfully
 - `400` - Bad Request: Invalid input or validation error
-- `401` - Unauthorized: Missing or invalid authentication
-- `404` - Not Found: Endpoint doesn't exist
+- `401` - Unauthorized: Missing or invalid authentication token
+- `404` - Not Found: Endpoint or resource doesn't exist
 - `500` - Internal Server Error: Server error occurred
-
-## Rate Limiting
-
-Currently no rate limiting. In production, implement:
-
-- Per-IP rate limits
-- Per-user rate limits
-- Token-based quota system
 
 ## CORS
 
@@ -146,152 +504,61 @@ Access-Control-Allow-Headers: Content-Type, Authorization
 ### Using cURL
 
 ```bash
-# Test coupon endpoint
+# Register user
+curl -X POST http://localhost:3001/api/user/register \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "John Doe",
+    "email": "john@example.com",
+    "password": "password123"
+  }'
+
+# Login
+curl -X POST http://localhost:3001/api/user/login \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "john@example.com",
+    "password": "password123"
+  }'
+
+# Get products
+curl -X GET http://localhost:3001/api/products
+
+# Apply coupon
 curl -X POST http://localhost:3001/api/apply/coupon \
   -H "Content-Type: application/json" \
   -d '{"coupon_code":"WELCOME10"}'
-
-# Test with invalid coupon
-curl -X POST http://localhost:3001/api/apply/coupon \
-  -H "Content-Type: application/json" \
-  -d '{"coupon_code":"INVALID"}'
 ```
 
 ### Using Postman
 
-1. Create new POST request
-2. URL: `http://localhost:3001/api/apply/coupon`
-3. Headers: `Content-Type: application/json`
-4. Body (raw JSON):
+1. Import the API endpoints
+2. Set `{{base_url}}` variable to `http://localhost:3001/api`
+3. Set `{{token}}` variable with your access token after login
+4. Use Bearer token in Authorization header for protected endpoints
 
-```json
-{
-  "coupon_code": "WELCOME10"
-}
+### Using Frontend
+
+The frontend application at `http://localhost:3000` provides full UI for all API endpoints.
+
+## Database Support
+
+The API supports both SQLite and MySQL databases. Configure via `.env`:
+
+```
+DB_TYPE=mysql          # or 'sqlite'
+DB_HOST=localhost
+DB_NAME=ecommerce
+DB_USER=root
+DB_PASS=
 ```
 
-5. Click Send
+## Architecture
 
-### Using Frontend Test Page
+The API uses a **Database Adapter Pattern** to abstract database-specific logic:
 
-Open `frontend/test-coupon.html` in browser for interactive testing.
+- `DatabaseAdapter` interface defines the contract
+- `MySQLDatabase` and `SQLiteDatabase` implementations
+- Business logic classes (`User`, `Order`, `Product`) use adapters
 
-## Upcoming Endpoints (Planned)
-
-These endpoints are planned for future implementation:
-
-### Products
-
-- `GET /products` - List all products
-- `GET /products/:id` - Get product details
-- `GET /products/search` - Search products
-
-### Users
-
-- `POST /register` - Create new user account
-- `POST /login` - Login and get token
-- `POST /logout` - Logout user
-
-### Orders
-
-- `POST /orders` - Create new order
-- `GET /orders` - List user's orders
-- `GET /orders/:id` - Get order details
-
-### Admin
-
-- `POST /products` - Create product (admin only)
-- `PUT /products/:id` - Update product (admin only)
-- `DELETE /products/:id` - Delete product (admin only)
-
-## Integration Guide
-
-### JavaScript/jQuery
-
-```javascript
-// Apply coupon
-function applyCoupon(couponCode) {
-  $.ajax({
-    url: "http://localhost:3001/api/apply/coupon",
-    type: "POST",
-    contentType: "application/json",
-    data: JSON.stringify({
-      coupon_code: couponCode,
-    }),
-    success: function (response) {
-      console.log("Discount amount:", response.data.discount_amount);
-    },
-    error: function (error) {
-      console.log("Error:", error.responseJSON.error);
-    },
-  });
-}
-```
-
-### Python/Requests
-
-```python
-import requests
-
-response = requests.post(
-    'http://localhost:3001/api/apply/coupon',
-    json={'coupon_code': 'WELCOME10'}
-)
-
-if response.status_code == 200:
-    data = response.json()
-    discount = data['data']['discount_amount']
-else:
-    error = response.json()['error']
-```
-
-### Fetch API
-
-```javascript
-// Apply coupon with Fetch
-fetch("http://localhost:3001/api/apply/coupon", {
-  method: "POST",
-  headers: {
-    "Content-Type": "application/json",
-  },
-  body: JSON.stringify({
-    coupon_code: "WELCOME10",
-  }),
-})
-  .then((response) => response.json())
-  .then((data) => {
-    if (data.success) {
-      console.log("Discount:", data.data.discount_amount);
-    } else {
-      console.error("Error:", data.error);
-    }
-  })
-  .catch((error) => console.error("Request failed:", error));
-```
-
-## Version History
-
-### v1.0 (Current)
-
-- [x] Coupon API endpoint
-- [x] SQLite/MySQL support
-- [x] CORS headers
-- [x] Error handling
-- [x] Validation
-
-### v2.0 (Planned)
-
-- [ ] Product endpoints
-- [ ] User authentication (JWT)
-- [ ] Order management
-- [ ] Admin dashboard
-- [ ] Payment integration
-
-## Support
-
-For issues or questions about the API:
-
-1. Check the error response message
-2. Verify request format matches documentation
-3. Check PHP server logs for errors
-4. Test with cURL to isolate frontend issues
+This allows seamless switching between database types without code changes.

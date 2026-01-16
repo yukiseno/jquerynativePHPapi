@@ -33,6 +33,7 @@ nano .env  # or use your preferred editor
 **Option A: PHP Built-in Server (Recommended for Development)**
 
 ```bash
+cd backend
 php -S localhost:3001 -t public
 ```
 
@@ -41,6 +42,8 @@ You should see:
 ```
 PHP 8.4.13 Development Server (http://localhost:3001) started
 ```
+
+Backend API is now accessible at: `http://localhost:3001/api`
 
 **Option B: Apache/Nginx (Production)**
 
@@ -94,10 +97,13 @@ DB_PASS=your_password
 
 ### API Configuration
 
-```env
-# Frontend can access backend API at this URL
-API_URL=http://localhost:3001
+Frontend API configuration is in `frontend/config/app.php` and already points to:
+
 ```
+http://localhost:3001/api
+```
+
+No additional configuration needed for local development.
 
 ## Testing
 
@@ -106,7 +112,7 @@ API_URL=http://localhost:3001
 **Test Coupon Endpoint:**
 
 ```bash
-curl -X POST http://localhost:3001/api/apply/coupon \
+curl -X POST http://localhost:3001/api/coupon/apply \
   -H "Content-Type: application/json" \
   -d '{"coupon_code":"WELCOME10"}'
 ```
@@ -131,16 +137,13 @@ Expected response:
 Navigate to `http://localhost:3000` and:
 
 - [ ] Homepage loads
-- [ ] Products display
+- [ ] Products display with colors and sizes
 - [ ] Can search/filter products
 - [ ] Can view product details
 - [ ] Can add to cart
-- [ ] Can checkout
-- [ ] Can apply coupon
-
-### 3. Use Test Page
-
-Open `http://localhost:3000/test-coupon.html` for interactive API testing.
+- [ ] Can checkout with shipping address
+- [ ] Can apply test coupon (summer20)
+- [ ] Can view order history in profile
 
 ## Troubleshooting
 
@@ -158,7 +161,7 @@ lsof -i :3001
 kill -9 PID
 
 # Or use different port
-php -S localhost:3002 -t .
+php -S localhost:8001
 ```
 
 ### Database Not Found
@@ -210,38 +213,47 @@ brew upgrade php
 
 ```bash
 # Reset SQLite
-rm database/database.sqlite
-php artisan migrate:fresh --seed  # if using Laravel migration
-
-# Or manually create tables - see database-schema.sql
+rm backend/database/database.sqlite
+php backend/setup.php
+php backend/seeder.php
 ```
 
 ## Project Structure Details
 
 ```
 backend/
-├── api/
-│   └── index.php              # Main API router - handles all requests
+├── public/
+│   └── api/
+│       └── index.php              # Main API router - handles all requests
 ├── classes/
-│   ├── Database.php           # PDO singleton for DB connections
-│   ├── Coupon.php             # Coupon model with queries
-│   └── [Model files]          # Additional models
+│   ├── DatabaseAdapter.php        # Database interface (adapter pattern)
+│   ├── MySQLDatabase.php          # MySQL adapter
+│   ├── SQLiteDatabase.php         # SQLite adapter
+│   ├── Database.php               # Singleton factory for DB adapters
+│   ├── User.php                   # User model with auth methods
+│   ├── Product.php                # Product model
+│   ├── Order.php                  # Order model
+│   └── Coupon.php                 # Coupon model
 ├── database/
-│   └── database.sqlite        # SQLite database file
-├── .env                       # Configuration (git-ignored)
-├── .env.example               # Example configuration
-└── [PHP Files]                # Utility files
+│   └── database.sqlite            # SQLite database file
+├── .env                           # Configuration (git-ignored)
+├── .env.example                   # Example configuration
+├── setup.php                      # Database schema initialization
+└── seeder.php                     # Test data seeding
 
 frontend/
-├── index.html                 # Home page with product listing
-├── product.html               # Product detail page
-├── cart.html                  # Shopping cart
-├── checkout.html              # Checkout with coupon
-├── login.html                 # User login
-├── register.html              # User registration
-├── test-coupon.html           # API testing page
-├── css/                       # Stylesheets
-└── js/                        # JavaScript files
+├── config/
+│   └── app.php                    # API configuration
+├── controllers/                   # Page controllers
+├── models/
+│   ├── ApiClient.php              # API communication wrapper
+│   └── [Model files]
+├── views/                         # Page templates
+├── public/
+│   ├── js/                        # JavaScript (app.js + page-specific)
+│   └── css/                       # Stylesheets
+├── index.php                      # Frontend router
+└── api.php                        # API proxy for logout/session
 ```
 
 ## Development Workflow
@@ -260,7 +272,7 @@ frontend/
 2. **Add Route in API**
 
    ```php
-   // backend/api/index.php
+   // backend/public/api/index.php
    if ($method === 'POST' && $path === 'my/endpoint') {
        // Handle request
    }
@@ -290,17 +302,20 @@ frontend/
 
 ### Development
 
-- Use PHP built-in server for quick iteration
-- Enable error reporting in .env
-- Monitor PHP server logs
+- Use PHP built-in server for quick iteration (php -S localhost:3001 -t public in backend folder)
+- Enable error reporting in .env: `DEBUG=true`
+- Monitor PHP server logs in terminal where server is running
+- Use SQLite for development (default DB_TYPE=sqlite)
 
 ### Production
 
 - Use real web server (Apache/Nginx)
 - Enable OpCache for PHP
-- Set `DB_TYPE=mysql` for better performance
+- Set `DB_TYPE=mysql` for better performance and scalability
+- Use database connection pooling
 - Implement caching layer (Redis)
-- Use CDN for static files
+- Use CDN for static files (images, CSS, JS)
+- Enable HTTPS with valid SSL certificate
 
 ## Security Checklist
 
@@ -335,21 +350,22 @@ See `Dockerfile` for containerized deployment.
 ## Next Steps
 
 1. **Run the tests:** Follow the Testing section above
-2. **Explore the code:** Read through backend/api/index.php
-3. **Try API:** Use test-coupon.html to test endpoints
-4. **Extend features:** Add new endpoints as needed
-5. **Prepare for interview:** Practice explaining architecture
+2. **Explore the code:** Read ARCHITECTURE.md for design patterns, then review [backend/public/api/index.php](backend/public/api/index.php)
+3. **Try API:** Use curl examples above to test endpoints
+4. **Understand Database Adapter Pattern:** Review how backend/classes/DatabaseAdapter.php, MySQLDatabase.php, and SQLiteDatabase.php work together
+5. **Extend features:** Add new endpoints as needed following existing patterns
+6. **Prepare for interview:** Review ARCHITECTURE.md and practice explaining the Database Adapter Pattern
 
 ## Getting Help
 
 ### Check Logs
 
 ```bash
-# PHP error logs
-tail -f /var/log/php-fpm.log
+# See active requests and errors in PHP server
+# Check terminal where you ran: php -S localhost:3001 -t public
 
-# See active requests to PHP server
-# Check terminal where you ran: php -S localhost:3001
+# PHP built-in server outputs errors directly to terminal
+# Look for error messages and stack traces there
 ```
 
 ### Debug Mode

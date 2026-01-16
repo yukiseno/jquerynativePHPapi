@@ -189,7 +189,7 @@ XS, S, M, L, XL, XXL
 ```
 GET  /api/products                    # List all products
 GET  /api/product/{slug}/slug         # Get product by slug
-GET  /api/product/{id}                # Get product by ID
+GET  /api/product/{id}/show           # Get product by ID
 ```
 
 ### Authentication
@@ -234,7 +234,7 @@ This project demonstrates:
   - Native PHP without frameworks
   - RESTful API design
   - JWT authentication
-  - Database abstraction with PDO
+  - **Database Adapter Pattern** - Seamless database switching (SQLite/MySQL) without if/else checks in business logic
   - Error handling and security
 
 - **Frontend:**
@@ -253,8 +253,8 @@ Created by [Yuki Seno](https://github.com/yukiseno)
 
 **Test Coupons:**
 
-- `WELCOME10` - 10% discount
-- `SUMMER20` - 20% discount
+- `WELCOME10` - 10% discount (valid for 1 month)
+- `SUMMER20` - 20% discount (valid for 2 months)
 
 ## Configuration
 
@@ -280,8 +280,8 @@ API_URL=http://localhost:3001                          # API base URL
 
 ### Code Architecture
 
+- **Database Adapter Pattern** - Abstracts SQLite/MySQL differences, eliminates database type checks in business logic
 - **Separation of Concerns** - Models in `/classes`, routes in `/api`
-- **PDO Abstraction** - Database layer is abstraction-agnostic
 - **Singleton Pattern** - Database connection pooling via singleton
 - **RESTful Design** - Clean HTTP methods and status codes
 
@@ -353,7 +353,7 @@ POST http://localhost:3001/api/apply/coupon
 
 - **Language:** PHP 8.0+ (OOP, static methods, magic methods)
 - **Database:** PDO, SQLite, MySQL, parameterized queries
-- **Architecture:** Singleton pattern, MVC separation, abstraction layers
+- **Architecture:** **Database Adapter Pattern** for multi-database support, Singleton pattern for connection pooling, MVC separation of concerns
 - **Security:** bcrypt, SQL injection prevention, input validation
 - **API:** REST principles, HTTP status codes, JSON, CORS
 - **Frontend:** jQuery, Ajax requests, Bootstrap

@@ -25,7 +25,7 @@ This is a **production-ready native PHP e-commerce API** demonstrating professio
                      │
 ┌────────────────────▼────────────────────────────────────┐
 │                  API Gateway                             │
-│         (backend/api/index.php - Port 3001)             │
+│      (backend/public/api/index.php - Port 3001)         │
 │                                                          │
 │  ┌────────────────────────────────────────────────┐   │
 │  │  Router: Parse request path → Handler        │   │
@@ -74,22 +74,23 @@ This is a **production-ready native PHP e-commerce API** demonstrating professio
 ### 1. Request Arrives
 
 ```
-POST /api/apply/coupon
+POST /backend/public/api/index.php?route=user/login
 Content-Type: application/json
-{"coupon_code": "WELCOME10"}
+Authorization: Bearer {token}
+{"email": "user@example.com", "password": "password123"}
 ```
 
 ### 2. API Router (index.php)
 
 ```php
 // Parse request
-$method = $_SERVER['REQUEST_METHOD'];      // POST
-$path = parse_url($_SERVER['REQUEST_URI']); // /api/apply/coupon
-$body = getJsonBody();                     // {"coupon_code": "WELCOME10"}
+$method = $_SERVER['REQUEST_METHOD'];           // POST
+$route = $_GET['route'] ?? '';                 // user/login
+$body = getJsonBody();                         // {"email": "...", "password": "..."}
 
 // Route to handler
-if ($method === 'POST' && $path === 'apply/coupon') {
-    // Handle coupon application
+if ($method === 'POST' && $route === 'user/login') {
+    // Handle user login
 }
 ```
 
@@ -160,22 +161,70 @@ $connection = new PDO('sqlite:database.sqlite');
 
 ## Design Patterns
 
-### 1. Singleton Pattern (Database)
+### 1. Database Adapter Pattern (DatabaseAdapter, MySQLDatabase, SQLiteDatabase)
 
-**Purpose:** Ensure only one database connection throughout the app
+**Purpose:** Abstract database-specific logic to support multiple databases without code changes
 
 ```php
+// Interface defines contract
+interface DatabaseAdapter {
+    public function getCurrentTimestampFunction();
+    public function insertIgnore($table, $columns, $values);
+    public function prepare($sql);
+    public function query($sql);
+    // ... more methods
+}
+
+// MySQL implementation
+class MySQLDatabase implements DatabaseAdapter {
+    public function getCurrentTimestampFunction() { return 'NOW()'; }
+    public function insertIgnore($table, $columns, $values) { /* MySQL-specific */ }
+}
+
+// SQLite implementation
+class SQLiteDatabase implements DatabaseAdapter {
+    public function getCurrentTimestampFunction() { return "datetime('now')"; }
+    public function insertIgnore($table, $columns, $values) { /* SQLite-specific */ }
+}
+
+// Factory instantiates correct adapter
 class Database {
     private static $instance = null;
+    private $adapter;
 
     public static function getInstance() {
         if (self::$instance === null) {
             self::$instance = new self();
         }
-        return self::$instance->connection;
+        return self::$instance->adapter;
     }
 }
 ```
+
+**Benefits:**
+
+- Switch databases via `.env` configuration (no code changes)
+- Encapsulates database-specific syntax (NOW() vs datetime('now'))
+- Eliminates scattered if/else database type checks throughout codebase
+- Business logic classes are completely database-agnostic
+- Easy to add new database support
+
+**How to Use:**
+
+```php
+// .env - Just change this to switch databases
+DB_TYPE=mysql   # or 'sqlite'
+
+// Business logic doesn't care which database is used
+$db = Database::getInstance();
+$timestamp = $db->getCurrentTimestampFunction(); // Works with both!
+```
+
+**Interview value:** "Demonstrates understanding of adapter pattern solving real-world multi-database requirements. Shows how to refactor a codebase to eliminate database type conditionals."
+
+### 2. Singleton Pattern (Database)
+
+**Purpose:** Ensure only one adapter instance throughout the app
 
 **Benefits:**
 
@@ -183,7 +232,7 @@ class Database {
 - Consistent connection state
 - Easy to test (can mock)
 
-### 2. Model Pattern (Coupon, Product, etc.)
+### 3. Model Pattern (Coupon, Product, User, Order)
 
 **Purpose:** Encapsulate data access and business logic
 
@@ -206,7 +255,7 @@ class Coupon {
 - Reusable query methods
 - Testable business logic
 
-### 3. Repository Pattern (Implied)
+### 4. Repository Pattern (Implied)
 
 Models act as repositories - they fetch and persist data:
 
@@ -221,7 +270,7 @@ $isValid = $coupon->isValid();
 $data = $coupon->toApiArray();
 ```
 
-### 4. Router Pattern
+### 5. Router Pattern
 
 Simple routing based on HTTP method and path:
 
@@ -288,14 +337,44 @@ $stmt->execute([$couponCode]);  // Safe
 $stmt->execute(["WHERE name = '$couponCode'"]); // VULNERABLE
 ```
 
-### Authentication (Future)
+### Authentication (Implemented)
 
 ```php
 // Verify Bearer token
-$token = getBearerToken();
-if (!$token || !verifyJWT($token)) {
-    return unauthorized('Invalid token');
+$token = getBearerToken();  // Extract from Authorization header
+if (!$token) {
+    http_response_code(401);
+    echo json_encode(['error' => 'Unauthorized']);
+    exit;
 }
+
+// Verify token in database
+$user = User::verifyToken($token);
+if (!$user) {
+    http_response_code(401);
+    echo json_encode(['error' => 'Invalid token']);
+    exit;
+}
+
+// Token valid, process request
+```
+
+**Token Generation:**
+
+```php
+// User::generateToken() creates unique token and stores in database
+$token = bin2hex(random_bytes(32));
+$db->prepare("INSERT INTO personal_access_tokens ...")->execute([...]);
+return $token;
+```
+
+**Token Verification:**
+
+```php
+// User::verifyToken() checks if token exists and hasn't expired
+$stmt = $db->prepare("SELECT * FROM personal_access_tokens WHERE token = ?");
+$stmt->execute([$token]);
+return $stmt->fetch(PDO::FETCH_ASSOC);
 ```
 
 ### Database Security
@@ -357,65 +436,56 @@ Microservices
     └─ Separate auth, product, order services
 ```
 
-## Testing Architecture
+## Testing
 
-### Unit Tests (Planned)
-
-```php
-// Test: Coupon is valid before expiry
-function testCouponIsValidBeforeExpiry() {
-    $coupon = new Coupon(null, [
-        'valid_until' => date('Y-m-d', strtotime('+1 day'))
-    ]);
-    assert($coupon->isValid() === true);
-}
-
-// Test: Coupon is invalid after expiry
-function testCouponIsInvalidAfterExpiry() {
-    $coupon = new Coupon(null, [
-        'valid_until' => date('Y-m-d', strtotime('-1 day'))
-    ]);
-    assert($coupon->isValid() === false);
-}
-```
-
-### Integration Tests (Planned)
+### Manual Testing with cURL
 
 ```bash
-# Test API endpoint directly
-curl -X POST http://localhost:3001/api/apply/coupon \
+# Register user
+curl -X POST http://localhost:3001/api/user/register \
   -H "Content-Type: application/json" \
-  -d '{"coupon_code":"WELCOME10"}'
+  -d '{"name":"John","email":"john@example.com","password":"password123"}'
 
-# Verify response
-# - Status code 200
-# - JSON format valid
-# - discount_amount present
+# Login
+curl -X POST http://localhost:3001/api/user/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"john@example.com","password":"password123"}'
+
+# Get products
+curl http://localhost:3001/api/products
+
+# Create order (requires token)
+curl -X POST http://localhost:3001/api/orders \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer {token}" \
+  -d '{"cartItems":[...],"address":{...}}'
 ```
 
-## Extensibility
+### Frontend Testing
 
-### Adding New Endpoint
+The complete frontend at `http://localhost:3000` provides full integration testing of all endpoints through the UI.
+
+## Adding New Endpoints
+
+### Steps
 
 1. Create model class: `classes/MyModel.php`
 2. Add handler in `api/index.php`
 3. Follow conventions (HTTP methods, response format)
-4. Test with curl or test page
+4. Test with curl or frontend
 
-### Example: Add Product Endpoint
+### Example: Add Product Listing
 
 ```php
 // classes/Product.php
-class Product {
-    public static function all() {
-        global $database;
-        $stmt = $database->query("SELECT * FROM products");
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
-    }
+public static function all() {
+    $db = Database::getInstance();
+    $stmt = $db->query("SELECT * FROM products");
+    return $stmt->fetchAll(PDO::FETCH_ASSOC);
 }
 
 // api/index.php
-if ($method === 'GET' && $path === 'products') {
+if ($method === 'GET' && $route === 'products') {
     $products = Product::all();
     echo json_encode([
         'success' => true,
@@ -424,52 +494,184 @@ if ($method === 'GET' && $path === 'products') {
 }
 ```
 
+## Implemented Features
+
+### ✅ Multi-Database Support
+
+- Switch between MySQL and SQLite via `.env`
+- Database Adapter Pattern eliminates type checking
+- Seeder works with both databases
+
+### ✅ Authentication
+
+- User registration with bcrypt password hashing
+- Login with token generation
+- Token-based auth for protected endpoints
+- Logout with token revocation
+
+### ✅ E-commerce Features
+
+- Product browsing with colors and sizes
+- Shopping cart (localStorage)
+- Order creation with address
+- Coupon application
+- Order history
+
+### ✅ Production-Ready
+
+- Error handling with proper HTTP status codes
+- Input validation
+- Parameterized queries (SQL injection prevention)
+- CORS headers
+- Clean API responses
+
+## Switching Between SQLite and MySQL
+
+The database adapter pattern makes it trivial to switch databases:
+
+**Step 1: Update `.env` file**
+
+```env
+DB_TYPE=mysql
+DB_HOST=localhost
+DB_NAME=ecommerce
+DB_USER=root
+DB_PASS=password
+```
+
+**Step 2: Create database and run setup**
+
+```bash
+php backend/setup.php
+```
+
+**That's it!** No code changes needed. The same codebase works seamlessly with both SQLite and MySQL.
+
+**How it works:**
+
+1. `Database::getInstance()` reads `DB_TYPE` from `.env`
+2. Instantiates correct adapter (MySQLDatabase or SQLiteDatabase)
+3. Returns adapter implementing `DatabaseAdapter` interface
+4. All business logic uses interface methods (database-agnostic)
+5. Adapter handles database-specific SQL syntax
+
 ## Database Schema
 
 ### Coupons Table
 
 ```sql
 CREATE TABLE coupons (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    name VARCHAR(255) UNIQUE NOT NULL,
-    discount INTEGER NOT NULL,
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(255) NOT NULL UNIQUE,
+    discount INT NOT NULL,
     valid_until DATE NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
-
-CREATE INDEX idx_coupons_name ON coupons(name);
-CREATE INDEX idx_coupons_valid_until ON coupons(valid_until);
 ```
 
-### Future Tables
+### Users Table
 
 ```sql
--- Users
 CREATE TABLE users (
-    id INTEGER PRIMARY KEY,
-    email VARCHAR(255) UNIQUE,
-    password VARCHAR(255),
-    name VARCHAR(255),
-    created_at TIMESTAMP
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    email VARCHAR(255) NOT NULL UNIQUE,
+    password VARCHAR(255) NOT NULL,
+    phone_number VARCHAR(20),
+    address VARCHAR(255),
+    city VARCHAR(255),
+    country VARCHAR(255),
+    zip_code VARCHAR(20),
+    profile_completed INT DEFAULT 0,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
+```
 
--- Products
+### Products Table
+
+```sql
 CREATE TABLE products (
-    id INTEGER PRIMARY KEY,
-    name VARCHAR(255),
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
     description TEXT,
-    price DECIMAL(10,2),
-    created_at TIMESTAMP
+    slug VARCHAR(255) NOT NULL UNIQUE,
+    thumbnail VARCHAR(255),
+    price INT NOT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+```
+
+### Orders & Order Items Tables
+
+```sql
+CREATE TABLE orders (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    coupon_id INT,
+    subtotal INT NOT NULL,
+    discount_total INT DEFAULT 0,
+    total INT NOT NULL,
+    status VARCHAR(50) DEFAULT 'pending',
+    payment_intent_id VARCHAR(255) UNIQUE,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (coupon_id) REFERENCES coupons(id) ON DELETE SET NULL
 );
 
--- Orders
-CREATE TABLE orders (
-    id INTEGER PRIMARY KEY,
-    user_id INTEGER,
-    total DECIMAL(10,2),
-    status VARCHAR(50),
-    created_at TIMESTAMP
+CREATE TABLE order_items (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    order_id INT NOT NULL,
+    product_id INT,
+    product_name VARCHAR(255),
+    color_id INT,
+    color_name VARCHAR(255),
+    size_id INT,
+    size_name VARCHAR(255),
+    qty INT,
+    price INT,
+    subtotal INT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE
+);
+```
+
+### Colors & Sizes Tables
+
+```sql
+CREATE TABLE colors (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(255) NOT NULL UNIQUE,
+    hex_code VARCHAR(7),
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+CREATE TABLE sizes (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(255) NOT NULL UNIQUE,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+CREATE TABLE color_product (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    color_id INT NOT NULL,
+    product_id INT NOT NULL,
+    FOREIGN KEY (color_id) REFERENCES colors(id) ON DELETE CASCADE,
+    FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE
+);
+
+CREATE TABLE product_size (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    product_id INT NOT NULL,
+    size_id INT NOT NULL,
+    FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE,
+    FOREIGN KEY (size_id) REFERENCES sizes(id) ON DELETE CASCADE
 );
 ```
 
