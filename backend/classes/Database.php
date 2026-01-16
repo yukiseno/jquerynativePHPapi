@@ -3,7 +3,7 @@
 class Database
 {
     private static $instance = null;
-    private $connection;
+    private $adapter;
 
     private function __construct()
     {
@@ -27,21 +27,21 @@ class Database
             if (!file_exists($dbPath) && !str_starts_with($dbPath, '/')) {
                 $dbPath = __DIR__ . '/../' . $dbPath;
             }
-            $this->connection = new PDO('sqlite:' . $dbPath);
+            $connection = new PDO('sqlite:' . $dbPath);
+            $this->adapter = new SQLiteDatabase($connection);
         } else {
             $host = getenv('DB_HOST') ?: 'localhost';
             $dbname = getenv('DB_NAME') ?: 'ecommerce';
             $user = getenv('DB_USER') ?: 'root';
             $pass = getenv('DB_PASS') ?: '';
 
-            $this->connection = new PDO(
+            $connection = new PDO(
                 "mysql:host=$host;dbname=$dbname;charset=utf8",
                 $user,
                 $pass
             );
+            $this->adapter = new MySQLDatabase($connection);
         }
-
-        $this->connection->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
     }
 
     public static function getInstance()
@@ -49,6 +49,6 @@ class Database
         if (self::$instance === null) {
             self::$instance = new self();
         }
-        return self::$instance->connection;
+        return self::$instance->adapter;
     }
 }
