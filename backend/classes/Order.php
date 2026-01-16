@@ -12,7 +12,7 @@ class Order
     /**
      * Get the correct datetime function for the current database type
      */
-    private function getDatetimeFunction()
+    private static function getDatetimeFunction()
     {
         $db = Database::getInstance();
         return $db->getCurrentTimestampFunction();
