@@ -4,6 +4,24 @@ require_once __DIR__ . '/classes/Database.php';
 
 $db = Database::getInstance();
 
+// Detect database type
+$envFile = __DIR__ . '/.env';
+$dbType = 'sqlite';
+if (file_exists($envFile)) {
+    $lines = file($envFile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+    foreach ($lines as $line) {
+        if (strpos($line, 'DB_TYPE=') === 0) {
+            $dbType = trim(explode('=', $line)[1]);
+            break;
+        }
+    }
+}
+
+// Prepare INSERT OR IGNORE syntax based on database type
+$ignoreClause = ($dbType === 'mysql') ? 'IGNORE' : 'OR IGNORE';
+
+$db = Database::getInstance();
+
 try {
     echo "Seeding database...\n";
 
@@ -11,7 +29,11 @@ try {
     echo "\n📍 Seeding colors...";
     $colors = ['Black', 'White', 'Red', 'Blue', 'Green', 'Gray', 'Navy'];
     foreach ($colors as $color) {
-        $db->prepare("INSERT OR IGNORE INTO colors (name) VALUES (?)")->execute([$color]);
+        if ($dbType === 'mysql') {
+            $db->prepare("INSERT IGNORE INTO colors (name) VALUES (?)")->execute([$color]);
+        } else {
+            $db->prepare("INSERT OR IGNORE INTO colors (name) VALUES (?)")->execute([$color]);
+        }
     }
     echo " ✓\n";
 
@@ -19,7 +41,11 @@ try {
     echo "📍 Seeding sizes...";
     $sizes = ['XS', 'S', 'M', 'L', 'XL', 'XXL'];
     foreach ($sizes as $size) {
-        $db->prepare("INSERT OR IGNORE INTO sizes (name) VALUES (?)")->execute([$size]);
+        if ($dbType === 'mysql') {
+            $db->prepare("INSERT IGNORE INTO sizes (name) VALUES (?)")->execute([$size]);
+        } else {
+            $db->prepare("INSERT OR IGNORE INTO sizes (name) VALUES (?)")->execute([$size]);
+        }
     }
     echo " ✓\n";
 
@@ -30,7 +56,11 @@ try {
         ['name' => 'SUMMER20', 'discount' => 20, 'valid_until' => date('Y-m-d', strtotime('+2 months'))],
     ];
     foreach ($coupons as $coupon) {
-        $stmt = $db->prepare("INSERT OR IGNORE INTO coupons (name, discount, valid_until) VALUES (?, ?, ?)");
+        if ($dbType === 'mysql') {
+            $stmt = $db->prepare("INSERT IGNORE INTO coupons (name, discount, valid_until) VALUES (?, ?, ?)");
+        } else {
+            $stmt = $db->prepare("INSERT OR IGNORE INTO coupons (name, discount, valid_until) VALUES (?, ?, ?)");
+        }
         $stmt->execute([$coupon['name'], $coupon['discount'], $coupon['valid_until']]);
     }
     echo " ✓\n";
@@ -78,7 +108,11 @@ try {
 
     foreach ($products as $productData) {
         // Insert product
-        $stmt = $db->prepare("INSERT OR IGNORE INTO products (name, description, slug, thumbnail, price) VALUES (?, ?, ?, ?, ?)");
+        if ($dbType === 'mysql') {
+            $stmt = $db->prepare("INSERT IGNORE INTO products (name, description, slug, thumbnail, price) VALUES (?, ?, ?, ?, ?)");
+        } else {
+            $stmt = $db->prepare("INSERT OR IGNORE INTO products (name, description, slug, thumbnail, price) VALUES (?, ?, ?, ?, ?)");
+        }
         $stmt->execute([
             $productData['name'],
             $productData['description'],
@@ -99,8 +133,13 @@ try {
             $colorStmt->execute([$colorName]);
             $color = $colorStmt->fetch(PDO::FETCH_ASSOC);
             if ($color) {
-                $db->prepare("INSERT OR IGNORE INTO color_product (product_id, color_id) VALUES (?, ?)")
-                    ->execute([$productId, $color['id']]);
+                if ($dbType === 'mysql') {
+                    $db->prepare("INSERT IGNORE INTO color_product (product_id, color_id) VALUES (?, ?)")
+                        ->execute([$productId, $color['id']]);
+                } else {
+                    $db->prepare("INSERT OR IGNORE INTO color_product (product_id, color_id) VALUES (?, ?)")
+                        ->execute([$productId, $color['id']]);
+                }
             }
         }
 
@@ -110,8 +149,13 @@ try {
             $sizeStmt->execute([$sizeName]);
             $size = $sizeStmt->fetch(PDO::FETCH_ASSOC);
             if ($size) {
-                $db->prepare("INSERT OR IGNORE INTO product_size (product_id, size_id) VALUES (?, ?)")
-                    ->execute([$productId, $size['id']]);
+                if ($dbType === 'mysql') {
+                    $db->prepare("INSERT IGNORE INTO product_size (product_id, size_id) VALUES (?, ?)")
+                        ->execute([$productId, $size['id']]);
+                } else {
+                    $db->prepare("INSERT OR IGNORE INTO product_size (product_id, size_id) VALUES (?, ?)")
+                        ->execute([$productId, $size['id']]);
+                }
             }
         }
     }
@@ -129,7 +173,11 @@ try {
 
     foreach ($users as $user) {
         $hashedPassword = password_hash($user['password'], PASSWORD_BCRYPT);
-        $stmt = $db->prepare("INSERT OR IGNORE INTO users (name, email, password) VALUES (?, ?, ?)");
+        if ($dbType === 'mysql') {
+            $stmt = $db->prepare("INSERT IGNORE INTO users (name, email, password) VALUES (?, ?, ?)");
+        } else {
+            $stmt = $db->prepare("INSERT OR IGNORE INTO users (name, email, password) VALUES (?, ?, ?)");
+        }
         $stmt->execute([$user['name'], $user['email'], $hashedPassword]);
     }
     echo " ✓\n";

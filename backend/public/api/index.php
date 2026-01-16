@@ -407,6 +407,42 @@ if ($method === 'GET' && preg_match('/^orders\/(\d+)$/', $path, $matches)) {
     exit;
 }
 
+// GET user profile
+if ($method === 'GET' && $path === 'user/profile') {
+    $token = getBearerToken();
+    $user = null;
+
+    if ($token) {
+        try {
+            $user = User::verifyToken($token);
+        } catch (Exception $e) {
+            http_response_code(401);
+            echo json_encode(['error' => 'Unauthorized']);
+            exit;
+        }
+    }
+
+    if (!$user) {
+        http_response_code(401);
+        echo json_encode(['error' => 'Authentication required']);
+        exit;
+    }
+
+    try {
+        // Fetch latest user info from database
+        $updatedUser = User::findById($user['id']);
+
+        http_response_code(200);
+        echo json_encode([
+            'data' => $updatedUser
+        ]);
+    } catch (Exception $e) {
+        http_response_code(500);
+        echo json_encode(['error' => 'Server error: ' . $e->getMessage()]);
+    }
+    exit;
+}
+
 // Update user profile
 if ($method === 'POST' && $path === 'user/profile/update') {
     $token = getBearerToken();
