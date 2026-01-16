@@ -1,5 +1,9 @@
 <?php
 
+require_once __DIR__ . '/DatabaseAdapter.php';
+require_once __DIR__ . '/MySQLDatabase.php';
+require_once __DIR__ . '/SQLiteDatabase.php';
+
 class Database
 {
     private static $instance = null;
