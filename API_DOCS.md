@@ -332,10 +332,10 @@ Apply a coupon code to get discount information.
 
 #### Available Test Coupons
 
-| Code      | Discount | Valid Until |
-| --------- | -------- | ----------- |
-| WELCOME10 | 10%      | 2026-03-16  |
-| SUMMER20  | 20%      | 2026-04-16  |
+| Code      | Discount | Validity |
+| --------- | -------- | -------- |
+| WELCOME10 | 10%      | Valid for 1 month from seed date |
+| SUMMER20  | 20%      | Valid for 2 months from seed date |
 
 ### Orders
 
