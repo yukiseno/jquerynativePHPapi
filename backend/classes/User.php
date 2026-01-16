@@ -109,10 +109,18 @@ class User
         $hashedToken = hash('sha256', $token);
 
         try {
-            $stmt = $this->db->prepare(
-                'INSERT INTO personal_access_tokens (tokenable_id, tokenable_type, name, token, created_at, updated_at) 
-                 VALUES (?, ?, ?, ?, datetime("now"), datetime("now"))'
-            );
+            $dbType = getenv('DB_TYPE') ?: 'sqlite';
+            if ($dbType === 'mysql') {
+                $stmt = $this->db->prepare(
+                    'INSERT INTO personal_access_tokens (tokenable_id, tokenable_type, name, token, created_at, updated_at) 
+                     VALUES (?, ?, ?, ?, NOW(), NOW())'
+                );
+            } else {
+                $stmt = $this->db->prepare(
+                    'INSERT INTO personal_access_tokens (tokenable_id, tokenable_type, name, token, created_at, updated_at) 
+                     VALUES (?, ?, ?, ?, datetime("now"), datetime("now"))'
+                );
+            }
             $stmt->execute([$userId, 'App\\Models\\User', 'user_token', $hashedToken]);
 
             return $token;
@@ -134,10 +142,18 @@ class User
         $hashedToken = hash('sha256', $token);
 
         try {
-            $stmt = $db->prepare(
-                'SELECT tokenable_id FROM personal_access_tokens 
-                 WHERE token = ? AND (expires_at IS NULL OR expires_at > datetime("now"))'
-            );
+            $dbType = getenv('DB_TYPE') ?: 'sqlite';
+            if ($dbType === 'mysql') {
+                $stmt = $db->prepare(
+                    'SELECT tokenable_id FROM personal_access_tokens 
+                     WHERE token = ? AND (expires_at IS NULL OR expires_at > NOW())'
+                );
+            } else {
+                $stmt = $db->prepare(
+                    'SELECT tokenable_id FROM personal_access_tokens 
+                     WHERE token = ? AND (expires_at IS NULL OR expires_at > datetime("now"))'
+                );
+            }
             $stmt->execute([$hashedToken]);
             $result = $stmt->fetch(PDO::FETCH_ASSOC);
 
