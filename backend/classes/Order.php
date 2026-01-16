@@ -14,8 +14,8 @@ class Order
      */
     private static function getDatetimeFunction()
     {
-        $dbType = getenv('DB_TYPE') ?: 'sqlite';
-        return $dbType === 'sqlite' ? "datetime('now')" : 'NOW()';
+        $db = Database::getInstance();
+        return $db->getCurrentTimestampFunction();
     }
 
     /**
@@ -105,45 +105,26 @@ class Order
 
             // Update user address if provided
             if (!empty($data['address']) && is_array($data['address'])) {
-                $dbType = getenv('DB_TYPE') ?: 'sqlite';
-
                 $phoneNumber = $data['address']['phoneNumber'] ?? '';
                 $addressStr = $data['address']['address'] ?? '';
                 $city = $data['address']['city'] ?? '';
                 $country = $data['address']['country'] ?? '';
                 $zipCode = $data['address']['zip'] ?? '';
+                $timestampFunc = self::getDatetimeFunction();
 
-                if ($dbType === 'mysql') {
-                    // For MySQL, we don't need to explicitly set updated_at as it has ON UPDATE CURRENT_TIMESTAMP
-                    $addressStmt = $db->prepare("
-                        UPDATE users 
-                        SET phone_number = ?, address = ?, city = ?, country = ?, zip_code = ?, profile_completed = 1
-                        WHERE id = ?
-                    ");
-                    $addressStmt->execute([
-                        $phoneNumber,
-                        $addressStr,
-                        $city,
-                        $country,
-                        $zipCode,
-                        $data['user_id']
-                    ]);
-                } else {
-                    // For SQLite, we need to explicitly set the updated_at
-                    $addressStmt = $db->prepare("
-                        UPDATE users 
-                        SET phone_number = ?, address = ?, city = ?, country = ?, zip_code = ?, profile_completed = 1, updated_at = datetime('now')
-                        WHERE id = ?
-                    ");
-                    $addressStmt->execute([
-                        $phoneNumber,
-                        $addressStr,
-                        $city,
-                        $country,
-                        $zipCode,
-                        $data['user_id']
-                    ]);
-                }
+                $addressStmt = $db->prepare("
+                    UPDATE users 
+                    SET phone_number = ?, address = ?, city = ?, country = ?, zip_code = ?, profile_completed = 1, updated_at = {$timestampFunc}
+                    WHERE id = ?
+                ");
+                $addressStmt->execute([
+                    $phoneNumber,
+                    $addressStr,
+                    $city,
+                    $country,
+                    $zipCode,
+                    $data['user_id']
+                ]);
             }
 
             $db->commit();
