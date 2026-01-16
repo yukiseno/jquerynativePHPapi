@@ -9,32 +9,70 @@
  * Usage: php reset-database.php
  */
 
-// Determine database path
-$projectRoot = dirname(__FILE__);
-$dbPath = $projectRoot . '/backend/database/database.sqlite';
+require_once __DIR__ . '/backend/classes/Database.php';
 
-// Delete existing database file
-if (file_exists($dbPath)) {
-    if (unlink($dbPath)) {
-        echo "✓ Deleted existing database\n";
-    } else {
-        echo "✗ Failed to delete existing database\n";
+// Load .env file to check DB_TYPE
+$envFile = __DIR__ . '/backend/.env';
+$dbType = 'sqlite';
+if (file_exists($envFile)) {
+    $lines = file($envFile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+    foreach ($lines as $line) {
+        if (strpos($line, 'DB_TYPE=') === 0) {
+            $dbType = trim(explode('=', $line)[1]);
+            break;
+        }
+    }
+}
+
+// Reset based on database type
+if ($dbType === 'mysql') {
+    // For MySQL, drop all tables
+    echo "🔄 Resetting MySQL database...\n";
+
+    try {
+        $db = Database::getInstance();
+
+        // Drop tables in correct order (due to foreign keys)
+        $tables = ['order_items', 'orders', 'personal_access_tokens', 'product_size', 'color_product', 'coupons', 'sizes', 'colors', 'products', 'users'];
+
+        foreach ($tables as $table) {
+            $db->exec("DROP TABLE IF EXISTS `$table`");
+            echo "✓ Dropped table: $table\n";
+        }
+
+        echo "\n✓ All tables dropped\n";
+    } catch (Exception $e) {
+        echo "✗ Failed to reset database: " . $e->getMessage() . "\n";
         exit(1);
     }
 } else {
-    echo "ℹ No existing database found\n";
-}
+    // For SQLite, delete the database file
+    $projectRoot = dirname(__FILE__);
+    $dbPath = $projectRoot . '/backend/database/database.sqlite';
 
-// Ensure database directory exists
-$dbDir = dirname($dbPath);
-if (!is_dir($dbDir)) {
-    mkdir($dbDir, 0755, true);
-    echo "✓ Created database directory\n";
+    // Delete existing database file
+    if (file_exists($dbPath)) {
+        if (unlink($dbPath)) {
+            echo "✓ Deleted existing SQLite database\n";
+        } else {
+            echo "✗ Failed to delete existing database\n";
+            exit(1);
+        }
+    } else {
+        echo "ℹ No existing database found\n";
+    }
+
+    // Ensure database directory exists
+    $dbDir = dirname($dbPath);
+    if (!is_dir($dbDir)) {
+        mkdir($dbDir, 0755, true);
+        echo "✓ Created database directory\n";
+    }
 }
 
 // Run setup script to create tables and seed data
-require_once $projectRoot . '/backend/setup.php';
+require_once __DIR__ . '/backend/setup.php';
 
 echo "\n✓ Database reset complete!\n";
 echo "✓ Tables created with fresh test data\n";
-echo "✓ Test user: user@test.com / password\n";
+echo "✓ Test user: user@test.com / password1234\n";
