@@ -32,6 +32,11 @@ interface DatabaseAdapter
     public function prepare($sql);
 
     /**
+     * Execute a query directly and return result set
+     */
+    public function query($sql);
+
+    /**
      * Execute a statement directly
      */
     public function exec($sql);

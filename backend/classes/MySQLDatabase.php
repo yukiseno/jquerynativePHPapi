@@ -39,6 +39,11 @@ class MySQLDatabase implements DatabaseAdapter
         return $this->connection->prepare($sql);
     }
 
+    public function query($sql)
+    {
+        return $this->connection->query($sql);
+    }
+
     public function exec($sql)
     {
         return $this->connection->exec($sql);
