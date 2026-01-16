@@ -10,18 +10,45 @@ $(document).ready(function () {
 });
 
 function loadProfile() {
-  const user = JSON.parse(localStorage.getItem("authUser")) || {};
+  const token = localStorage.getItem("authToken");
 
-  // Display user info
-  $("#userName").text(user.name || "");
-  $("#userEmail").text(user.email || "");
+  // Fetch latest user data from API
+  $.ajax({
+    url: window.API_URL + "/user/profile",
+    type: "GET",
+    headers: {
+      Authorization: "Bearer " + token,
+    },
+    success: function (response) {
+      const user = response.data || {};
 
-  // Load address info from localStorage (if already set)
-  $("#phoneNumber").val(user.phone_number || "");
-  $("#address").val(user.address || "");
-  $("#city").val(user.city || "");
-  $("#country").val(user.country || "");
-  $("#zip").val(user.zip_code || "");
+      // Update localStorage with latest user data
+      localStorage.setItem("authUser", JSON.stringify(user));
+
+      // Display user info
+      $("#userName").text(user.name || "");
+      $("#userEmail").text(user.email || "");
+
+      // Load address info from API response
+      $("#phoneNumber").val(user.phone_number || "");
+      $("#address").val(user.address || "");
+      $("#city").val(user.city || "");
+      $("#country").val(user.country || "");
+      $("#zip").val(user.zip_code || "");
+    },
+    error: function (xhr) {
+      // Fallback to localStorage if API fails
+      const user = JSON.parse(localStorage.getItem("authUser")) || {};
+
+      $("#userName").text(user.name || "");
+      $("#userEmail").text(user.email || "");
+      $("#phoneNumber").val(user.phone_number || "");
+      $("#address").val(user.address || "");
+      $("#city").val(user.city || "");
+      $("#country").val(user.country || "");
+      $("#zip").val(user.zip_code || "");
+    },
+  });
 }
 
 function updateProfile() {
