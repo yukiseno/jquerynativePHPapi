@@ -2,7 +2,7 @@
 
 ## Overview
 
-This is a **production-ready native PHP e-commerce API** demonstrating professional architecture principles, security practices, and scalable design patterns.
+This is a **native PHP e-commerce API** demonstrating professional architecture principles, security practices, and scalable design patterns.
 
 ### Design Philosophy
 
