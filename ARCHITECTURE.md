@@ -106,11 +106,11 @@ $coupon = $couponObj->findByName($couponCode);
 
 // Validate
 if (!$coupon || !$coupon->isValid()) {
-    return error("Invalid or expired coupon");
+    apiError("Invalid or expired coupon", HTTP_BAD_REQUEST);
 }
 
 // Return result
-return success($coupon->toApiArray());
+apiSuccess($coupon->toApiArray(), 'Coupon applied successfully', HTTP_OK);
 ```
 
 ### 4. Model Layer (Coupon.php)
@@ -337,7 +337,7 @@ Frontend
 ```php
 // Check required fields
 if (!$couponCode) {
-    return error('Coupon code is required');
+    apiError('Coupon code is required', HTTP_BAD_REQUEST);
 }
 
 // Parameterized queries prevent SQL injection
@@ -353,17 +353,13 @@ $stmt->execute(["WHERE name = '$couponCode'"]); // VULNERABLE
 // Verify Bearer token
 $token = getBearerToken();  // Extract from Authorization header
 if (!$token) {
-    http_response_code(401);
-    echo json_encode(['error' => 'Unauthorized']);
-    exit;
+    apiError('Unauthorized', HTTP_UNAUTHORIZED);
 }
 
 // Verify token in database
 $user = User::verifyToken($token);
 if (!$user) {
-    http_response_code(401);
-    echo json_encode(['error' => 'Invalid token']);
-    exit;
+    apiError('Invalid token', HTTP_UNAUTHORIZED);
 }
 
 // Token valid, process request

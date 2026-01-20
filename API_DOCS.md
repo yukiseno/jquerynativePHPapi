@@ -236,33 +236,37 @@ Get all products with available colors and sizes.
 ```json
 {
   "success": true,
-  "data": [
-    {
-      "id": 1,
-      "name": "Product Name",
-      "description": "Product description",
-      "slug": "product-name",
-      "thumbnail": "/images/product.jpg",
-      "price": 2999,
-      "created_at": "2026-01-16 10:00:00",
-      "colors": [
-        { "id": 1, "name": "Black" },
-        { "id": 2, "name": "White" }
-      ],
-      "sizes": [
-        { "id": 1, "name": "S" },
-        { "id": 2, "name": "M" }
-      ]
-    }
-  ],
-  "colors": [{ "id": 1, "name": "Black", "created_at": "2026-01-16 10:00:00" }],
-  "sizes": [{ "id": 1, "name": "S", "created_at": "2026-01-16 10:00:00" }]
+  "data": {
+    "data": [
+      {
+        "id": 1,
+        "name": "Product Name",
+        "slug": "product-name",
+        "desc": "Product description",
+        "thumbnail": "http://localhost:3001/images/products/product.jpg",
+        "price": 2999,
+        "status": 1,
+        "colors": [
+          { "id": 1, "name": "Black" },
+          { "id": 2, "name": "White" }
+        ],
+        "sizes": [
+          { "id": 1, "name": "S" },
+          { "id": 2, "name": "M" }
+        ]
+      }
+    ],
+    "colors": [
+      { "id": 1, "name": "Black", "created_at": "2026-01-16 10:00:00" }
+    ],
+    "sizes": [{ "id": 1, "name": "S", "created_at": "2026-01-16 10:00:00" }]
+  }
 }
 ```
 
 #### Get Product Details
 
-**GET** `/products/{id}`
+**GET** `/product/{id}/show`
 
 Get specific product with all details.
 
@@ -272,20 +276,27 @@ Get specific product with all details.
 {
   "success": true,
   "data": {
-    "id": 1,
-    "name": "T-Shirt",
-    "description": "Comfortable cotton t-shirt",
-    "slug": "t-shirt",
-    "thumbnail": "/images/tshirt.jpg",
-    "price": 1999,
+    "data": {
+      "id": 1,
+      "name": "T-Shirt",
+      "slug": "t-shirt",
+      "desc": "Comfortable cotton t-shirt",
+      "thumbnail": "http://localhost:3001/images/products/tshirt.jpg",
+      "price": 1999,
+      "status": 1,
+      "colors": [
+        { "id": 1, "name": "Black" },
+        { "id": 2, "name": "White" }
+      ],
+      "sizes": [
+        { "id": 1, "name": "XS" },
+        { "id": 2, "name": "S" }
+      ]
+    },
     "colors": [
-      { "id": 1, "name": "Black" },
-      { "id": 2, "name": "White" }
+      { "id": 1, "name": "Black", "created_at": "2026-01-16 10:00:00" }
     ],
-    "sizes": [
-      { "id": 1, "name": "XS" },
-      { "id": 2, "name": "S" }
-    ]
+    "sizes": [{ "id": 1, "name": "S", "created_at": "2026-01-16 10:00:00" }]
   }
 }
 ```
@@ -332,9 +343,9 @@ Apply a coupon code to get discount information.
 
 #### Available Test Coupons
 
-| Code      | Discount | Validity |
-| --------- | -------- | -------- |
-| WELCOME10 | 10%      | Valid for 1 month from seed date |
+| Code      | Discount | Validity                          |
+| --------- | -------- | --------------------------------- |
+| WELCOME10 | 10%      | Valid for 1 month from seed date  |
 | SUMMER20  | 20%      | Valid for 2 months from seed date |
 
 ### Orders
