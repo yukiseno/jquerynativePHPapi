@@ -208,4 +208,33 @@ class User
             return null;
         }
     }
+
+    /**
+     * Update user profile
+     */
+    public function updateProfile($userId, $data)
+    {
+        try {
+            $timestampFunc = $this->db->getCurrentTimestampFunction();
+            $stmt = $this->db->prepare("
+                UPDATE users 
+                SET phone_number = ?, address = ?, city = ?, country = ?, zip_code = ?, profile_completed = 1, updated_at = {$timestampFunc}
+                WHERE id = ?
+            ");
+
+            $stmt->execute([
+                $data['phoneNumber'] ?? '',
+                $data['address'] ?? '',
+                $data['city'] ?? '',
+                $data['country'] ?? '',
+                $data['zip'] ?? '',
+                $userId
+            ]);
+
+            // Return updated user info
+            return $this->findById($userId);
+        } catch (Exception $e) {
+            throw $e;
+        }
+    }
 }

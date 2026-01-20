@@ -424,7 +424,8 @@ if ($method === 'GET' && $path === 'user/profile') {
 
     if ($token) {
         try {
-            $user = User::verifyToken($token);
+            $userObj = new User();
+            $user = $userObj->verifyToken($token);
         } catch (Exception $e) {
             http_response_code(401);
             echo json_encode(['error' => 'Unauthorized']);
@@ -479,25 +480,8 @@ if ($method === 'POST' && $path === 'user/profile/update') {
     $data = json_decode(file_get_contents('php://input'), true);
 
     try {
-        $db = Database::getInstance();
-        $stmt = $db->prepare("
-            UPDATE users 
-            SET phone_number = ?, address = ?, city = ?, country = ?, zip_code = ?, updated_at = datetime('now')
-            WHERE id = ?
-        ");
-
-        $stmt->execute([
-            $data['phoneNumber'] ?? '',
-            $data['address'] ?? '',
-            $data['city'] ?? '',
-            $data['country'] ?? '',
-            $data['zip'] ?? '',
-            $user['id']
-        ]);
-
-        // Return updated user info
         $userObj = new User();
-        $updatedUser = $userObj->findById($user['id']);
+        $updatedUser = $userObj->updateProfile($user['id'], $data);
 
         http_response_code(200);
         echo json_encode([
