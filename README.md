@@ -42,18 +42,24 @@ jquerynativePHPapi/
 │   │       └── index.php       # Main API router
 │   ├── classes/
 │   │   ├── Database.php        # PDO singleton
+│   │   ├── DatabaseAdapter.php # Database interface
+│   │   ├── MySQLDatabase.php   # MySQL adapter
+│   │   ├── SQLiteDatabase.php  # SQLite adapter
 │   │   ├── Product.php         # Product queries
 │   │   ├── User.php            # User auth
 │   │   ├── Coupon.php          # Coupon logic
 │   │   └── Order.php           # Order processing
-│   ├── database/
-│   │   └── .gitkeep            # Database directory
-│   ├── setup.php               # Initialize database + seed data
-│   ├── seeder.php              # Add/update seed data
-│   └── .env                    # Environment config
+│   ├── middleware.php          # Response helpers (apiSuccess, apiError)
+│   ├── database/                # Database files directory
+│   │   └── database.sqlite     # SQLite database (created by setup.php)
+│   ├── setup.php               # Initialize database schema
+│   ├── seeder.php              # Add test data
+│   ├── .env.example            # Example config (copy to .env)
+│   └── .gitignore              # Ignores .env and database.sqlite
 │
 ├── frontend/                   # PHP MVC Application
 │   ├── index.php               # Main router
+│   ├── api.php                 # API proxy for sessions
 │   ├── config/
 │   │   └── app.php             # Global config & helpers
 │   ├── controllers/            # Page controllers
@@ -230,7 +236,6 @@ POST /api/apply/coupon                # Apply discount code
 This project demonstrates:
 
 - **Backend:**
-
   - Native PHP without frameworks
   - RESTful API design
   - JWT authentication
