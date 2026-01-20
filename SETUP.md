@@ -21,11 +21,32 @@ cd jquerynativePHPapi
 ```bash
 cd backend
 
-# Create .env file (if not exists)
+# Copy example config to create .env (git-ignored)
 cp .env.example .env
 
-# Edit .env if needed (default SQLite works out of the box)
+# Edit .env if needed for MySQL (default SQLite works out of the box)
 nano .env  # or use your preferred editor
+```
+
+### Step 2b: Initialize Database
+
+**For SQLite (default):**
+
+```bash
+# Creates database/database.sqlite and initializes schema
+php setup.php
+
+# Seeds test data
+php seeder.php
+```
+
+**For MySQL:**
+
+Create your MySQL database first, then:
+
+```bash
+php setup.php    # Creates tables
+php seeder.php   # Seeds test data
 ```
 
 ### Step 3: Start Backend Server
