@@ -694,7 +694,7 @@ SQLITE_PATH=./database/database.sqlite
 API_URL=http://localhost:3001
 
 # Security
-JWT_SECRET=your_secret_key
+# Note: Bearer tokens stored in personal_access_tokens database table
 CORS_ALLOWED=*
 ```
 
@@ -741,17 +741,17 @@ MySQL Cluster
 
 ## Technology Stack
 
-| Layer              | Technology | Version  |
-| ------------------ | ---------- | -------- |
-| **Frontend**       | jQuery     | 3.6.0    |
-| **Frontend**       | Bootstrap  | 5.3.0    |
-| **Backend**        | PHP        | 8.0+     |
-| **Backend**        | PDO        | Native   |
-| **Database**       | SQLite     | 3.x      |
-| **Database**       | MySQL      | 5.7+     |
-| **Authentication** | JWT        | RS256    |
-| **API Format**     | JSON       | RFC 7159 |
-| **Transport**      | HTTP/HTTPS | 1.1/2.0  |
+| Layer              | Technology   | Version         |
+| ------------------ | ------------ | --------------- |
+| **Frontend**       | jQuery       | 3.6.0           |
+| **Frontend**       | Bootstrap    | 5.3.0           |
+| **Backend**        | PHP          | 8.0+            |
+| **Backend**        | PDO          | Native          |
+| **Database**       | SQLite       | 3.x             |
+| **Database**       | MySQL        | 5.7+            |
+| **Authentication** | Bearer Token | Database-backed |
+| **API Format**     | JSON         | RFC 7159        |
+| **Transport**      | HTTP/HTTPS   | 1.1/2.0         |
 
 ## Performance Metrics
 
@@ -781,7 +781,7 @@ Memory: 2.1MB
 - ✅ CORS headers
 - ✅ Error messages don't expose system details
 - ✅ Password hashing with bcrypt (future)
-- ✅ JWT authentication (future)
+- ✅ Bearer token authentication (database-backed)
 - ✅ Rate limiting (future)
 - ✅ SSL/TLS (production)
 
@@ -936,13 +936,15 @@ $stmt->execute([$name]);  // $name never injected directly
    ↓
 2. Server verifies with bcrypt (password_verify)
    ↓
-3. If valid, generate JWT token
+3. If valid, generate unique bearer token (random 64-char hex)
    ↓
-4. Client stores token in localStorage
+4. Store token in personal_access_tokens database table
    ↓
-5. Future requests include: Authorization: Bearer {token}
+5. Client stores token in localStorage
    ↓
-6. Server validates token before processing
+6. Future requests include: Authorization: Bearer {token}
+   ↓
+7. Server queries personal_access_tokens to validate token
 ```
 
 ## Performance Considerations

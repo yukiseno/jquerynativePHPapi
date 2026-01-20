@@ -7,7 +7,7 @@ A modern, full-stack e-commerce application built with **Native PHP** backend an
 - **Backend:** Native PHP REST API (port 3001) - No frameworks, pure PDO
 - **Frontend:** PHP MVC with Server-Side Rendering (port 3000) - Clean URLs, Bootstrap 5
 - **Database:** SQLite (development) / MySQL (production)
-- **Authentication:** JWT tokens + PHP sessions
+- **Authentication:** Bearer Tokens + PHP sessions
 - **Styling:** Bootstrap 5.3.0
 
 ## ✨ Features
@@ -15,7 +15,7 @@ A modern, full-stack e-commerce application built with **Native PHP** backend an
 ### Backend API
 
 - ✅ Native PHP - Pure PHP with PDO, no dependencies
-- ✅ JWT Authentication - Secure, stateless token-based auth
+- ✅ Bearer Token Authentication - Database-backed token-based auth
 - ✅ RESTful API - Professional HTTP conventions
 - ✅ Product Management - Browse, filter, search
 - ✅ Coupon System - Discount codes with expiry
@@ -25,7 +25,7 @@ A modern, full-stack e-commerce application built with **Native PHP** backend an
 ### Frontend
 
 - ✅ PHP MVC Architecture - Clean separation of concerns
-- ✅ Server-Side Authentication - PHP sessions with fallback to JWT
+- ✅ Server-Side Authentication - PHP sessions with fallback to bearer tokens
 - ✅ Clean URLs - `/product/slug` instead of `/?page=product`
 - ✅ Responsive Design - Mobile-friendly with Bootstrap
 - ✅ Client-Side Interactions - jQuery for smooth UX
@@ -180,13 +180,13 @@ XS, S, M, L, XL, XXL
 
 ## 🔐 Security Features
 
-- JWT token-based API authentication
+- Bearer token-based API authentication (database-backed)
 - PHP session-based frontend authentication
 - Parameterized SQL queries (prevent SQL injection)
 - Bcrypt password hashing
 - Input validation and sanitization
 - CORS-aware API design
-- Secure session handling with token refresh
+- Secure session handling
 
 ## 📊 API Endpoints
 
@@ -202,7 +202,7 @@ GET  /api/product/{id}/show           # Get product by ID
 
 ```
 POST /api/user/register               # Create account
-POST /api/user/login                  # Get JWT token
+POST /api/user/login                  # Get bearer token
 GET  /api/user/profile                # Get user info (requires token)
 POST /api/user/profile/update         # Update profile
 ```
@@ -225,10 +225,10 @@ POST /api/apply/coupon                # Apply discount code
 
 | Layer          | Technology                          |
 | -------------- | ----------------------------------- |
-| Backend API    | Native PHP 7.4+, PDO                |
-| Frontend       | PHP 7.4+, Bootstrap 5.3, jQuery 3.6 |
+| Backend API    | Native PHP 8.0+, PDO                |
+| Frontend       | PHP 8.0+, Bootstrap 5.3, jQuery 3.6 |
 | Database       | SQLite (dev), MySQL (prod)          |
-| Authentication | JWT + PHP Sessions                  |
+| Authentication | Bearer Tokens + PHP Sessions        |
 | Styling        | Bootstrap 5.3.0 CDN                 |
 
 ## 🎓 Learning Outcomes
@@ -238,7 +238,7 @@ This project demonstrates:
 - **Backend:**
   - Native PHP without frameworks
   - RESTful API design
-  - JWT authentication
+  - Bearer token authentication (database-backed)
   - **Database Adapter Pattern** - Seamless database switching (SQLite/MySQL) without if/else checks in business logic
   - Error handling and security
 
@@ -294,7 +294,7 @@ API_URL=http://localhost:3001                          # API base URL
 
 - **Password Hashing** - bcrypt with automatic salting
 - **SQL Injection Prevention** - Parameterized queries throughout
-- **Bearer Token Auth** - JWT tokens for API authentication
+- **Bearer Token Auth** - Database-backed tokens for API authentication
 - **CORS Support** - Safe cross-origin requests
 
 ## Development Notes
