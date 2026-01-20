@@ -341,9 +341,21 @@ php -S localhost:3002 -t public  # Use port 3002 instead
 **CORS errors in browser:**
 
 ```bash
-# Ensure backend is running on port 3001
-# Check that index.php has CORS headers:
-header('Access-Control-Allow-Origin: *');
+# 1. Verify backend is running on port 3001
+curl http://localhost:3001/api/products
+
+# 2. Verify frontend API_URL is correct
+# Check: frontend/config/app.php -> define('API_URL', '...')
+
+# 3. Check browser DevTools Network tab for failed requests
+
+# 4. Verify no mixed HTTP/HTTPS (both should be HTTP for local dev)
+
+# Common causes:
+# - Backend not running
+# - Wrong API_URL in frontend config
+# - Browser caching CORS rejection
+# - Port 3001 blocked by firewall
 ```
 
 **API returns 404:**
@@ -402,7 +414,3 @@ This project demonstrates:
 ## 🤝 Contributing
 
 This is a portfolio project. For improvements or questions, feel free to create an issue or pull request.
-
-## 📝 License
-
-MIT License - Feel free to use for portfolio and interview preparation.
