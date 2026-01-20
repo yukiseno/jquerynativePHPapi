@@ -112,7 +112,7 @@ No additional configuration needed for local development.
 **Test Coupon Endpoint:**
 
 ```bash
-curl -X POST http://localhost:3001/api/coupon/apply \
+curl -X POST http://localhost:3001/api/apply/coupon \
   -H "Content-Type: application/json" \
   -d '{"coupon_code":"WELCOME10"}'
 ```
