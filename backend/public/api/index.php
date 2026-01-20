@@ -310,7 +310,8 @@ if ($method === 'POST' && $path === 'orders/store') {
         }
 
         // Create order
-        $order = Order::createOrder([
+        $order = new Order();
+        $result = $order->createOrder([
             'user_id' => $user['id'],
             'cartItems' => $data['cartItems'],
             'address' => $data['address'] ?? [],
@@ -352,7 +353,8 @@ if ($method === 'GET' && $path === 'user/orders') {
     }
 
     try {
-        $orders = Order::getUserOrders($user['id']);
+        $orderObj = new Order();
+        $orders = $orderObj->getUserOrders($user['id']);
         http_response_code(200);
         echo json_encode([
             'data' => $orders
@@ -388,7 +390,8 @@ if ($method === 'GET' && preg_match('/^orders\/(\d+)$/', $path, $matches)) {
     }
 
     try {
-        $order = Order::getOrderById($orderId);
+        $orderObj = new Order();
+        $order = $orderObj->getOrderById($orderId);
 
         if (!$order) {
             http_response_code(404);
