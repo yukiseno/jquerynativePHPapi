@@ -26,10 +26,19 @@ class Database
         $dbType = getenv('DB_TYPE') ?: 'sqlite';
 
         if ($dbType === 'sqlite') {
-            $dbPath = getenv('SQLITE_PATH') ?: __DIR__ . '/../database/database.sqlite';
+            $dbPath = getenv('SQLITE_PATH') ?: 'database/database.sqlite';
+
             // Resolve relative paths relative to backend directory
-            if (!file_exists($dbPath) && !str_starts_with($dbPath, '/')) {
-                $dbPath = __DIR__ . '/../' . $dbPath;
+            // Check if path is absolute (works on both Windows and Unix)
+            $isAbsolute = (strpos($dbPath, '/') === 0) || (strlen($dbPath) > 1 && $dbPath[1] === ':');
+            if (!$isAbsolute) {
+                $dbPath = __DIR__ . '/../' . ltrim($dbPath, '/\\.');
+            }
+
+            // Ensure the database directory exists (critical for Windows)
+            $dbDir = dirname($dbPath);
+            if (!is_dir($dbDir)) {
+                mkdir($dbDir, 0755, true);
             }
             $connection = new PDO('sqlite:' . $dbPath);
             $this->adapter = new SQLiteDatabase($connection);
