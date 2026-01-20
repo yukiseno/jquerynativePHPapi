@@ -123,20 +123,19 @@ class User
     }
 
     /**
-     * Verify token and get user (STATIC)
+     * Verify token and get user
      */
-    public static function verifyToken($token)
+    public function verifyToken($token)
     {
         if (!$token) {
             return null;
         }
 
-        $db = Database::getInstance();
         $hashedToken = hash('sha256', $token);
 
         try {
-            $timestampFunc = $db->getCurrentTimestampFunction();
-            $stmt = $db->prepare(
+            $timestampFunc = $this->db->getCurrentTimestampFunction();
+            $stmt = $this->db->prepare(
                 "SELECT tokenable_id FROM personal_access_tokens 
                  WHERE token = ? AND (expires_at IS NULL OR expires_at > {$timestampFunc})"
             );
@@ -148,7 +147,7 @@ class User
             }
 
             // Get user data
-            $stmt = $db->prepare('SELECT * FROM users WHERE id = ?');
+            $stmt = $this->db->prepare('SELECT * FROM users WHERE id = ?');
             $stmt->execute([$result['tokenable_id']]);
             $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
@@ -159,19 +158,18 @@ class User
     }
 
     /**
-     * Logout user (revoke token) (STATIC)
+     * Logout user (revoke token)
      */
-    public static function logout($token)
+    public function logout($token)
     {
         if (!$token) {
             return ['success' => false, 'message' => 'Invalid token'];
         }
 
-        $db = Database::getInstance();
         $hashedToken = hash('sha256', $token);
 
         try {
-            $stmt = $db->prepare('DELETE FROM personal_access_tokens WHERE token = ?');
+            $stmt = $this->db->prepare('DELETE FROM personal_access_tokens WHERE token = ?');
             $stmt->execute([$hashedToken]);
 
             return ['success' => true, 'message' => 'Logged out successfully'];
@@ -181,14 +179,12 @@ class User
     }
 
     /**
-     * Get user by ID (STATIC)
+     * Get user by ID
      */
-    public static function findById($id)
+    public function findById($id)
     {
-        $db = Database::getInstance();
-
         try {
-            $stmt = $db->prepare('SELECT * FROM users WHERE id = ?');
+            $stmt = $this->db->prepare('SELECT * FROM users WHERE id = ?');
             $stmt->execute([$id]);
             $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
@@ -214,33 +210,31 @@ class User
     }
 
     /**
-     * Get user by ID
+     * Update user profile
      */
-    public function getUserById($id)
+    public function updateProfile($userId, $data)
     {
         try {
-            $stmt = $this->db->prepare('SELECT * FROM users WHERE id = ?');
-            $stmt->execute([$id]);
-            $user = $stmt->fetch(PDO::FETCH_ASSOC);
+            $timestampFunc = $this->db->getCurrentTimestampFunction();
+            $stmt = $this->db->prepare("
+                UPDATE users 
+                SET phone_number = ?, address = ?, city = ?, country = ?, zip_code = ?, profile_completed = 1, updated_at = {$timestampFunc}
+                WHERE id = ?
+            ");
 
-            if (!$user) {
-                return null;
-            }
+            $stmt->execute([
+                $data['phoneNumber'] ?? '',
+                $data['address'] ?? '',
+                $data['city'] ?? '',
+                $data['country'] ?? '',
+                $data['zip'] ?? '',
+                $userId
+            ]);
 
-            return [
-                'id' => $user['id'],
-                'name' => $user['name'],
-                'email' => $user['email'],
-                'address' => $user['address'],
-                'city' => $user['city'],
-                'country' => $user['country'],
-                'zip_code' => $user['zip_code'],
-                'phone_number' => $user['phone_number'],
-                'profile_image' => $user['profile_image'],
-                'profile_completed' => $user['profile_completed']
-            ];
+            // Return updated user info
+            return $this->findById($userId);
         } catch (Exception $e) {
-            return null;
+            throw $e;
         }
     }
 }

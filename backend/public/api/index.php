@@ -5,8 +5,17 @@ header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
 header('Access-Control-Allow-Headers: Content-Type, Authorization');
 
+// HTTP Status Code Constants
+const HTTP_OK = 200;
+const HTTP_CREATED = 201;
+const HTTP_BAD_REQUEST = 400;
+const HTTP_UNAUTHORIZED = 401;
+const HTTP_FORBIDDEN = 403;
+const HTTP_NOT_FOUND = 404;
+const HTTP_SERVER_ERROR = 500;
+
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-    http_response_code(200);
+    http_response_code(HTTP_OK);
     exit;
 }
 
@@ -28,32 +37,14 @@ require_once __DIR__ . '/../../classes/Product.php';
 require_once __DIR__ . '/../../classes/User.php';
 require_once __DIR__ . '/../../classes/Order.php';
 
-// Initialize database
-$database = Database::getInstance();
+// Load middleware and helpers
+require_once __DIR__ . '/../../middleware.php';
 
 // Parse request
 $method = $_SERVER['REQUEST_METHOD'];
 $path = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
 $path = preg_replace('/^\/api/', '', $path);
 $path = trim($path, '/');
-
-// Helper function to get Bearer token
-function getBearerToken()
-{
-    $headers = getallheaders();
-    if (isset($headers['Authorization'])) {
-        if (preg_match('/Bearer\s+(\S+)/', $headers['Authorization'], $matches)) {
-            return $matches[1];
-        }
-    }
-    return null;
-}
-
-// Helper function to get JSON body
-function getJsonBody()
-{
-    return json_decode(file_get_contents('php://input'), true) ?? [];
-}
 
 // USER REGISTER
 if ($method === 'POST' && $path === 'user/register') {
@@ -63,22 +54,17 @@ if ($method === 'POST' && $path === 'user/register') {
     $password = $body['password'] ?? null;
 
     if (!$name || !$email || !$password) {
-        http_response_code(400);
-        echo json_encode(['error' => 'Name, email, and password are required']);
-        exit;
+        apiError('Name, email, and password are required', HTTP_BAD_REQUEST);
     }
 
     $user = new User();
     $result = $user->register($name, $email, $password);
 
     if ($result['success']) {
-        http_response_code(201);
-        echo json_encode(['message' => $result['message']]);
+        apiSuccess(null, $result['message'], HTTP_CREATED);
     } else {
-        http_response_code(400);
-        echo json_encode(['error' => $result['message']]);
+        apiError($result['message'], HTTP_BAD_REQUEST);
     }
-    exit;
 }
 
 // USER LOGIN
@@ -88,25 +74,20 @@ if ($method === 'POST' && $path === 'user/login') {
     $password = $body['password'] ?? null;
 
     if (!$email || !$password) {
-        http_response_code(400);
-        echo json_encode(['error' => 'Email and password are required']);
-        exit;
+        apiError('Email and password are required', HTTP_BAD_REQUEST);
     }
 
     $user = new User();
     $result = $user->login($email, $password);
 
     if ($result['success']) {
-        http_response_code(200);
-        echo json_encode([
+        apiSuccess([
             'user' => $result['user'],
             'access_token' => $result['access_token']
-        ]);
+        ], null, HTTP_OK);
     } else {
-        http_response_code(401);
-        echo json_encode(['error' => $result['message']]);
+        apiError($result['message'], HTTP_UNAUTHORIZED);
     }
-    exit;
 }
 
 // USER LOGOUT
@@ -114,22 +95,17 @@ if ($method === 'POST' && $path === 'user/logout') {
     $token = getBearerToken();
 
     if (!$token) {
-        http_response_code(401);
-        echo json_encode(['error' => 'Unauthorized']);
-        exit;
+        apiError('Unauthorized', HTTP_UNAUTHORIZED);
     }
 
     $user = new User();
     $result = $user->logout($token);
 
     if ($result['success']) {
-        http_response_code(200);
-        echo json_encode(['message' => $result['message']]);
+        apiSuccess(null, $result['message'], HTTP_OK);
     } else {
-        http_response_code(400);
-        echo json_encode(['error' => $result['message']]);
+        apiError($result['message'], HTTP_BAD_REQUEST);
     }
-    exit;
 }
 
 // API Routes
@@ -138,361 +114,208 @@ if ($method === 'POST' && $path === 'apply/coupon') {
     $couponCode = $body['coupon_code'] ?? $body['name'] ?? null;
 
     if (!$couponCode) {
-        http_response_code(400);
-        echo json_encode(['error' => 'Coupon code is required']);
-        exit;
+        apiError('Coupon code is required', HTTP_BAD_REQUEST);
     }
 
     try {
-        $coupon = Coupon::findByName($couponCode);
+        $couponObj = new Coupon();
+        $coupon = $couponObj->findByName($couponCode);
 
         if (!$coupon) {
-            http_response_code(400);
-            echo json_encode(['error' => 'Invalid or expired coupon']);
-            exit;
+            apiError('Invalid or expired coupon', HTTP_BAD_REQUEST);
         }
 
         if (!$coupon->isValid()) {
-            http_response_code(400);
-            echo json_encode(['error' => 'Invalid or expired coupon']);
-            exit;
+            apiError('Invalid or expired coupon', HTTP_BAD_REQUEST);
         }
 
-        http_response_code(200);
-        echo json_encode([
-            'success' => true,
-            'message' => 'Coupon applied successfully',
-            'data' => $coupon->toApiArray()
-        ]);
+        apiSuccess($coupon->toApiArray(), 'Coupon applied successfully', HTTP_OK);
     } catch (Exception $e) {
-        http_response_code(500);
-        echo json_encode(['error' => 'Server error: ' . $e->getMessage()]);
+        apiError('Server error: ' . $e->getMessage(), HTTP_SERVER_ERROR);
     }
-    exit;
 }
 
 // GET all products
 if ($method === 'GET' && $path === 'products') {
     try {
-        $result = Product::getAll();
-        http_response_code(200);
-        echo json_encode($result);
+        $product = new Product();
+        $result = $product->getAll();
+        apiSuccess($result, null, HTTP_OK);
     } catch (Exception $e) {
-        http_response_code(500);
-        echo json_encode(['error' => 'Server error: ' . $e->getMessage()]);
+        apiError('Server error: ' . $e->getMessage(), HTTP_SERVER_ERROR);
     }
-    exit;
 }
 
 // GET products by color
 if ($method === 'GET' && preg_match('/^products\/(\d+)\/color$/', $path, $matches)) {
     $colorId = $matches[1];
     try {
-        $result = Product::filterByColor($colorId);
-        http_response_code(200);
-        echo json_encode($result);
+        $product = new Product();
+        $result = $product->filterByColor($colorId);
+        apiSuccess($result, null, HTTP_OK);
     } catch (Exception $e) {
-        http_response_code(500);
-        echo json_encode(['error' => 'Server error: ' . $e->getMessage()]);
+        apiError('Server error: ' . $e->getMessage(), HTTP_SERVER_ERROR);
     }
-    exit;
 }
 
 // GET products by size
 if ($method === 'GET' && preg_match('/^products\/(\d+)\/size$/', $path, $matches)) {
     $sizeId = $matches[1];
     try {
-        $result = Product::filterBySize($sizeId);
-        http_response_code(200);
-        echo json_encode($result);
+        $product = new Product();
+        $result = $product->filterBySize($sizeId);
+        apiSuccess($result, null, HTTP_OK);
     } catch (Exception $e) {
-        http_response_code(500);
-        echo json_encode(['error' => 'Server error: ' . $e->getMessage()]);
+        apiError('Server error: ' . $e->getMessage(), HTTP_SERVER_ERROR);
     }
-    exit;
 }
 
 // GET products by search term
 if ($method === 'GET' && preg_match('/^products\/(.+)\/find$/', $path, $matches)) {
     $searchTerm = urldecode($matches[1]);
     try {
-        $result = Product::findByTerm($searchTerm);
-        http_response_code(200);
-        echo json_encode($result);
+        $product = new Product();
+        $result = $product->findByTerm($searchTerm);
+        apiSuccess($result, null, HTTP_OK);
     } catch (Exception $e) {
-        http_response_code(500);
-        echo json_encode(['error' => 'Server error: ' . $e->getMessage()]);
+        apiError('Server error: ' . $e->getMessage(), HTTP_SERVER_ERROR);
     }
-    exit;
 }
 
 // GET single product
 if ($method === 'GET' && preg_match('/^product\/(\d+)\/show$/', $path, $matches)) {
     $productId = $matches[1];
     try {
-        $result = Product::findById($productId);
+        $product = new Product();
+        $result = $product->findById($productId);
         if (!$result) {
-            http_response_code(404);
-            echo json_encode(['error' => 'Product not found']);
-            exit;
+            apiError('Product not found', HTTP_NOT_FOUND);
         }
-        http_response_code(200);
-        echo json_encode($result);
+        apiSuccess($result, null, HTTP_OK);
     } catch (Exception $e) {
-        http_response_code(500);
-        echo json_encode(['error' => 'Server error: ' . $e->getMessage()]);
+        apiError('Server error: ' . $e->getMessage(), HTTP_SERVER_ERROR);
     }
-    exit;
 }
 
 // GET single product by slug
 if ($method === 'GET' && preg_match('/^product\/(.+)\/slug$/', $path, $matches)) {
     $slug = $matches[1];
     try {
-        $result = Product::findBySlug($slug);
+        $product = new Product();
+        $result = $product->findBySlug($slug);
         if (!$result) {
-            http_response_code(404);
-            echo json_encode(['error' => 'Product not found']);
-            exit;
+            apiError('Product not found', HTTP_NOT_FOUND);
         }
-        http_response_code(200);
-        echo json_encode($result);
+        apiSuccess($result, null, HTTP_OK);
     } catch (Exception $e) {
-        http_response_code(500);
-        echo json_encode(['error' => 'Server error: ' . $e->getMessage()]);
+        apiError('Server error: ' . $e->getMessage(), HTTP_SERVER_ERROR);
     }
-    exit;
 }
 
 // POST create order
 if ($method === 'POST' && $path === 'orders/store') {
-    $token = getBearerToken();
-    $user = null;
-
-    if ($token) {
-        try {
-            $user = User::verifyToken($token);
-        } catch (Exception $e) {
-            http_response_code(401);
-            echo json_encode(['error' => 'Unauthorized']);
-            exit;
-        }
-    }
-
-    if (!$user) {
-        http_response_code(401);
-        echo json_encode(['error' => 'Authentication required']);
-        exit;
-    }
+    $auth = verifyUserToken();
+    $user = $auth['user'];
 
     $data = json_decode(file_get_contents('php://input'), true);
 
     try {
         // Validate input
         if (empty($data['cartItems']) || !is_array($data['cartItems'])) {
-            http_response_code(400);
-            echo json_encode(['error' => 'Invalid cart items']);
-            exit;
+            apiError('Invalid cart items', HTTP_BAD_REQUEST);
         }
 
         // Validate each cart item has required fields
         foreach ($data['cartItems'] as $item) {
             if (empty($item['id']) || empty($item['colorId']) || empty($item['sizeId'])) {
-                http_response_code(400);
-                echo json_encode(['error' => 'Cart items must have id, colorId, and sizeId']);
-                exit;
+                apiError('Cart items must have id, colorId, and sizeId', HTTP_BAD_REQUEST);
             }
         }
 
         // Create order
-        $order = Order::createOrder([
+        $order = new Order();
+        $result = $order->createOrder([
             'user_id' => $user['id'],
             'cartItems' => $data['cartItems'],
             'address' => $data['address'] ?? [],
             'couponId' => $data['couponId'] ?? null
         ]);
 
-        http_response_code(201);
-        echo json_encode([
-            'message' => 'Order placed successfully',
-            'data' => $order
-        ]);
+        apiSuccess($order, 'Order placed successfully', HTTP_CREATED);
     } catch (Exception $e) {
-        http_response_code(500);
-        echo json_encode(['error' => 'Server error: ' . $e->getMessage()]);
+        apiError('Server error: ' . $e->getMessage(), HTTP_SERVER_ERROR);
     }
-    exit;
 }
 
 // GET user orders
 if ($method === 'GET' && $path === 'user/orders') {
-    $token = getBearerToken();
-    $user = null;
-
-    if ($token) {
-        try {
-            $user = User::verifyToken($token);
-        } catch (Exception $e) {
-            http_response_code(401);
-            echo json_encode(['error' => 'Unauthorized']);
-            exit;
-        }
-    }
-
-    if (!$user) {
-        http_response_code(401);
-        echo json_encode(['error' => 'Authentication required']);
-        exit;
-    }
+    $auth = verifyUserToken();
+    $user = $auth['user'];
 
     try {
-        $orders = Order::getUserOrders($user['id']);
-        http_response_code(200);
-        echo json_encode([
-            'data' => $orders
-        ]);
+        $orderObj = new Order();
+        $orders = $orderObj->getUserOrders($user['id']);
+        apiSuccess($orders, null, HTTP_OK);
     } catch (Exception $e) {
-        http_response_code(500);
-        echo json_encode(['error' => 'Server error: ' . $e->getMessage()]);
+        apiError('Server error: ' . $e->getMessage(), HTTP_SERVER_ERROR);
     }
-    exit;
 }
 
 // Get single order by ID
 if ($method === 'GET' && preg_match('/^orders\/(\d+)$/', $path, $matches)) {
     $orderId = $matches[1];
-    $token = getBearerToken();
-    $user = null;
-
-    if ($token) {
-        try {
-            $user = User::verifyToken($token);
-        } catch (Exception $e) {
-            http_response_code(401);
-            echo json_encode(['error' => 'Unauthorized']);
-            exit;
-        }
-    }
-
-    if (!$user) {
-        http_response_code(401);
-        echo json_encode(['error' => 'Authentication required']);
-        exit;
-    }
+    $auth = verifyUserToken();
+    $user = $auth['user'];
 
     try {
-        $order = Order::getOrderById($orderId);
+        $orderObj = new Order();
+        $order = $orderObj->getOrderById($orderId);
 
         if (!$order) {
-            http_response_code(404);
-            echo json_encode(['error' => 'Order not found']);
-            exit;
+            apiError('Order not found', HTTP_NOT_FOUND);
         }
 
         // Verify order belongs to user
         if ($order['order']['user_id'] !== $user['id']) {
-            http_response_code(403);
-            echo json_encode(['error' => 'Forbidden']);
-            exit;
+            apiError('Forbidden', HTTP_FORBIDDEN);
         }
 
-        http_response_code(200);
-        echo json_encode([
-            'data' => array_merge($order['order'], ['items' => $order['items']])
-        ]);
+        apiSuccess(array_merge($order['order'], ['items' => $order['items']]), null, HTTP_OK);
     } catch (Exception $e) {
-        http_response_code(500);
-        echo json_encode(['error' => 'Server error: ' . $e->getMessage()]);
+        apiError('Server error: ' . $e->getMessage(), HTTP_SERVER_ERROR);
     }
-    exit;
 }
 
 // GET user profile
 if ($method === 'GET' && $path === 'user/profile') {
-    $token = getBearerToken();
-    $user = null;
-
-    if ($token) {
-        try {
-            $user = User::verifyToken($token);
-        } catch (Exception $e) {
-            http_response_code(401);
-            echo json_encode(['error' => 'Unauthorized']);
-            exit;
-        }
-    }
-
-    if (!$user) {
-        http_response_code(401);
-        echo json_encode(['error' => 'Authentication required']);
-        exit;
-    }
+    $auth = verifyUserToken();
+    $userObj = $auth['userObj'];
+    $user = $auth['user'];
 
     try {
-        // Fetch latest user info from database
-        $updatedUser = User::findById($user['id']);
+        // Fetch latest user info from database - reuse existing instance
+        $updatedUser = $userObj->findById($user['id']);
 
-        http_response_code(200);
-        echo json_encode([
-            'data' => $updatedUser
-        ]);
+        apiSuccess($updatedUser, null, HTTP_OK);
     } catch (Exception $e) {
-        http_response_code(500);
-        echo json_encode(['error' => 'Server error: ' . $e->getMessage()]);
+        apiError('Server error: ' . $e->getMessage(), HTTP_SERVER_ERROR);
     }
-    exit;
 }
 
 // Update user profile
 if ($method === 'POST' && $path === 'user/profile/update') {
-    $token = getBearerToken();
-    $user = null;
-
-    if ($token) {
-        try {
-            $user = User::verifyToken($token);
-        } catch (Exception $e) {
-            http_response_code(401);
-            echo json_encode(['error' => 'Unauthorized']);
-            exit;
-        }
-    }
-
-    if (!$user) {
-        http_response_code(401);
-        echo json_encode(['error' => 'Authentication required']);
-        exit;
-    }
+    $auth = verifyUserToken();
+    $userObj = $auth['userObj'];
+    $user = $auth['user'];
 
     $data = json_decode(file_get_contents('php://input'), true);
 
     try {
-        $db = Database::getInstance();
-        $stmt = $db->prepare("
-            UPDATE users 
-            SET phone_number = ?, address = ?, city = ?, country = ?, zip_code = ?, updated_at = datetime('now')
-            WHERE id = ?
-        ");
+        // Reuse existing instance
+        $updatedUser = $userObj->updateProfile($user['id'], $data);
 
-        $stmt->execute([
-            $data['phoneNumber'] ?? '',
-            $data['address'] ?? '',
-            $data['city'] ?? '',
-            $data['country'] ?? '',
-            $data['zip'] ?? '',
-            $user['id']
-        ]);
-
-        // Return updated user info
-        $updatedUser = User::findById($user['id']);
-
-        http_response_code(200);
-        echo json_encode([
-            'data' => $updatedUser
-        ]);
+        apiSuccess($updatedUser, null, HTTP_OK);
     } catch (Exception $e) {
-        http_response_code(500);
-        echo json_encode(['error' => 'Server error: ' . $e->getMessage()]);
+        apiError('Server error: ' . $e->getMessage(), HTTP_SERVER_ERROR);
     }
-    exit;
 }

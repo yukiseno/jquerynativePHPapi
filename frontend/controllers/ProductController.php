@@ -15,11 +15,12 @@ class ProductController
             return ['error' => 'Product not found'];
         }
 
+        // Product::findBySlug returns the API's 'data' which contains {data: {...}, colors: [...], sizes: [...]}
         return [
             'success' => true,
-            'product' => $product['data'] ?? null,
-            'colors' => $product['data']['colors'] ?? [],
-            'sizes' => $product['data']['sizes'] ?? []
+            'product' => $product['data']['data'] ?? null,
+            'colors' => $product['data']['data']['colors'] ?? [],
+            'sizes' => $product['data']['data']['sizes'] ?? []
         ];
     }
 }

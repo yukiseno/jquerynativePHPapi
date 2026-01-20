@@ -20,12 +20,12 @@ function login() {
     data: JSON.stringify({ email, password }),
     contentType: "application/json",
     success: function (response) {
-      if (response.access_token) {
-        localStorage.setItem("authToken", response.access_token);
-        localStorage.setItem("authUser", JSON.stringify(response.user));
+      if (response.data?.access_token) {
+        localStorage.setItem("authToken", response.data.access_token);
+        localStorage.setItem("authUser", JSON.stringify(response.data.user));
 
         // Set PHP session
-        setPhpSession(response.access_token, response.user);
+        setPhpSession(response.data.access_token, response.data.user);
       }
     },
     error: function (xhr) {

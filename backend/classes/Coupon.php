@@ -5,25 +5,23 @@ class Coupon
     private $db;
     private $data = [];
 
-    public function __construct($database = null, $data = [])
+    public function __construct($data = [])
     {
-        $this->db = $database;
+        $this->db = Database::getInstance();
         $this->data = $data;
     }
 
     /**
      * Find coupon by name
      */
-    public static function findByName($name)
+    public function findByName($name)
     {
-        $db = Database::getInstance();
-
-        $stmt = $db->prepare("SELECT * FROM coupons WHERE UPPER(name) = UPPER(?)");
+        $stmt = $this->db->prepare("SELECT * FROM coupons WHERE UPPER(name) = UPPER(?)");
         $stmt->execute([$name]);
         $result = $stmt->fetch(PDO::FETCH_ASSOC);
 
         if ($result) {
-            return new self($db, $result);
+            return new self($result);
         }
 
         return null;

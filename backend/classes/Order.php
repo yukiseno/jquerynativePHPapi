@@ -12,10 +12,9 @@ class Order
     /**
      * Get the correct datetime function for the current database type
      */
-    private static function getDatetimeFunction()
+    private function getDatetimeFunction()
     {
-        $db = Database::getInstance();
-        return $db->getCurrentTimestampFunction();
+        return $this->db->getCurrentTimestampFunction();
     }
 
     /**
@@ -30,12 +29,10 @@ class Order
      *   'couponId' => int (optional)
      * ]
      */
-    public static function createOrder($data)
+    public function createOrder($data)
     {
-        $db = Database::getInstance();
-
         try {
-            $db->beginTransaction();
+            $this->db->beginTransaction();
 
             // Calculate totals
             $subtotal = 0;
@@ -48,7 +45,7 @@ class Order
             $couponId = null;
 
             if (!empty($data['couponId'])) {
-                $coupon = self::getCoupon($data['couponId']);
+                $coupon = $this->getCoupon($data['couponId']);
                 if ($coupon) {
                     $discountTotal = (int)round($subtotal * ($coupon['discount'] / 100));
                     $couponId = $coupon['id'];
@@ -61,8 +58,8 @@ class Order
             $paymentIntentId = 'pi_' . bin2hex(random_bytes(16));
 
             // Create order
-            $datetimeFunc = self::getDatetimeFunction();
-            $stmt = $db->prepare("
+            $datetimeFunc = $this->getDatetimeFunction();
+            $stmt = $this->db->prepare("
                 INSERT INTO orders (user_id, coupon_id, subtotal, discount_total, total, status, payment_intent_id, created_at, updated_at)
                 VALUES (?, ?, ?, ?, ?, ?, ?, {$datetimeFunc}, {$datetimeFunc})
             ");
@@ -77,12 +74,12 @@ class Order
                 $paymentIntentId
             ]);
 
-            $orderId = $db->lastInsertId();
+            $orderId = $this->db->lastInsertId();
 
             // Create order items
             foreach ($data['cartItems'] as $item) {
-                $datetimeFunc = self::getDatetimeFunction();
-                $itemStmt = $db->prepare("
+                $datetimeFunc = $this->getDatetimeFunction();
+                $itemStmt = $this->db->prepare("
                     INSERT INTO order_items (order_id, product_id, product_name, color_id, size_id, color_name, size_name, qty, price, subtotal, created_at, updated_at)
                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, {$datetimeFunc}, {$datetimeFunc})
                 ");
@@ -110,9 +107,9 @@ class Order
                 $city = $data['address']['city'] ?? '';
                 $country = $data['address']['country'] ?? '';
                 $zipCode = $data['address']['zip'] ?? '';
-                $timestampFunc = self::getDatetimeFunction();
+                $timestampFunc = $this->getDatetimeFunction();
 
-                $addressStmt = $db->prepare("
+                $addressStmt = $this->db->prepare("
                     UPDATE users 
                     SET phone_number = ?, address = ?, city = ?, country = ?, zip_code = ?, profile_completed = 1, updated_at = {$timestampFunc}
                     WHERE id = ?
@@ -127,12 +124,12 @@ class Order
                 ]);
             }
 
-            $db->commit();
+            $this->db->commit();
 
             // Fetch and return the created order with items
-            return self::getOrderById($orderId);
+            return $this->getOrderById($orderId);
         } catch (Exception $e) {
-            $db->rollBack();
+            $this->db->rollBack();
             throw $e;
         }
     }
@@ -140,11 +137,9 @@ class Order
     /**
      * Get order by ID with items
      */
-    public static function getOrderById($orderId)
+    public function getOrderById($orderId)
     {
-        $db = Database::getInstance();
-
-        $stmt = $db->prepare("
+        $stmt = $this->db->prepare("
             SELECT o.*, u.name as user_name, u.email as user_email, c.name as coupon_name, c.discount as coupon_discount
             FROM orders o
             LEFT JOIN users u ON o.user_id = u.id
@@ -161,7 +156,7 @@ class Order
         }
 
         // Fetch order items
-        $itemStmt = $db->prepare("
+        $itemStmt = $this->db->prepare("
             SELECT * FROM order_items WHERE order_id = ?
         ");
         $itemStmt->execute([$orderId]);
@@ -206,11 +201,9 @@ class Order
     /**
      * Get coupon by ID and check if valid
      */
-    private static function getCoupon($couponId)
+    private function getCoupon($couponId)
     {
-        $db = Database::getInstance();
-
-        $stmt = $db->prepare("
+        $stmt = $this->db->prepare("
             SELECT * FROM coupons WHERE id = ? LIMIT 1
         ");
         $stmt->execute([$couponId]);
@@ -222,11 +215,9 @@ class Order
     /**
      * Get user's orders
      */
-    public static function getUserOrders($userId)
+    public function getUserOrders($userId)
     {
-        $db = Database::getInstance();
-
-        $stmt = $db->prepare("
+        $stmt = $this->db->prepare("
             SELECT o.*, c.name as coupon_name
             FROM orders o
             LEFT JOIN coupons c ON o.coupon_id = c.id

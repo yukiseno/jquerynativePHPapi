@@ -13,11 +13,10 @@ class Product
      * Get all products with colors and sizes - Laravel format
      * Returns only colors and sizes that are actually used by products
      */
-    public static function getAll()
+    public function getAll()
     {
-        $db = Database::getInstance();
 
-        $products = $db->query("SELECT * FROM products ORDER BY id DESC")->fetchAll(PDO::FETCH_ASSOC);
+        $products = $this->db->query("SELECT * FROM products ORDER BY id DESC")->fetchAll(PDO::FETCH_ASSOC);
         $productData = [];
 
         foreach ($products as $product) {
@@ -25,7 +24,7 @@ class Product
         }
 
         // Get only colors that are actually used by products
-        $colors = $db->query("
+        $colors = $this->db->query("
             SELECT DISTINCT c.id, c.name, c.created_at, c.updated_at 
             FROM colors c
             JOIN color_product cp ON c.id = cp.color_id
@@ -33,7 +32,7 @@ class Product
         ")->fetchAll(PDO::FETCH_ASSOC);
 
         // Get only sizes that are actually used by products
-        $sizes = $db->query("
+        $sizes = $this->db->query("
             SELECT DISTINCT s.id, s.name, s.created_at, s.updated_at 
             FROM sizes s
             JOIN product_size ps ON s.id = ps.size_id
@@ -50,11 +49,9 @@ class Product
     /**
      * Filter products by color
      */
-    public static function filterByColor($colorId)
+    public function filterByColor($colorId)
     {
-        $db = Database::getInstance();
-
-        $stmt = $db->prepare("
+        $stmt = $this->db->prepare("
             SELECT DISTINCT p.* FROM products p
             JOIN color_product pc ON p.id = pc.product_id
             WHERE pc.color_id = ? ORDER BY p.id DESC
@@ -64,11 +61,11 @@ class Product
 
         $productData = [];
         foreach ($products as $product) {
-            $productData[] = self::formatProduct($product);
+            $productData[] = $this->formatProduct($product);
         }
 
-        $colors = $db->query("SELECT id, name, created_at, updated_at FROM colors ORDER BY name")->fetchAll(PDO::FETCH_ASSOC);
-        $sizes = $db->query("SELECT id, name, created_at, updated_at FROM sizes ORDER BY name")->fetchAll(PDO::FETCH_ASSOC);
+        $colors = $this->db->query("SELECT id, name, created_at, updated_at FROM colors ORDER BY name")->fetchAll(PDO::FETCH_ASSOC);
+        $sizes = $this->db->query("SELECT id, name, created_at, updated_at FROM sizes ORDER BY name")->fetchAll(PDO::FETCH_ASSOC);
 
         return [
             'data' => $productData,
@@ -80,11 +77,9 @@ class Product
     /**
      * Filter products by size
      */
-    public static function filterBySize($sizeId)
+    public function filterBySize($sizeId)
     {
-        $db = Database::getInstance();
-
-        $stmt = $db->prepare("
+        $stmt = $this->db->prepare("
             SELECT DISTINCT p.* FROM products p
             JOIN product_size ps ON p.id = ps.product_id
             WHERE ps.size_id = ? ORDER BY p.id DESC
@@ -94,11 +89,11 @@ class Product
 
         $productData = [];
         foreach ($products as $product) {
-            $productData[] = self::formatProduct($product);
+            $productData[] = $this->formatProduct($product);
         }
 
-        $colors = $db->query("SELECT id, name, created_at, updated_at FROM colors ORDER BY name")->fetchAll(PDO::FETCH_ASSOC);
-        $sizes = $db->query("SELECT id, name, created_at, updated_at FROM sizes ORDER BY name")->fetchAll(PDO::FETCH_ASSOC);
+        $colors = $this->db->query("SELECT id, name, created_at, updated_at FROM colors ORDER BY name")->fetchAll(PDO::FETCH_ASSOC);
+        $sizes = $this->db->query("SELECT id, name, created_at, updated_at FROM sizes ORDER BY name")->fetchAll(PDO::FETCH_ASSOC);
 
         return [
             'data' => $productData,
@@ -110,21 +105,19 @@ class Product
     /**
      * Search products by term
      */
-    public static function findByTerm($searchTerm)
+    public function findByTerm($searchTerm)
     {
-        $db = Database::getInstance();
-
-        $stmt = $db->prepare("SELECT * FROM products WHERE name LIKE ? ORDER BY id DESC");
+        $stmt = $this->db->prepare("SELECT * FROM products WHERE name LIKE ? ORDER BY id DESC");
         $stmt->execute(['%' . $searchTerm . '%']);
         $products = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
         $productData = [];
         foreach ($products as $product) {
-            $productData[] = self::formatProduct($product);
+            $productData[] = $this->formatProduct($product);
         }
 
-        $colors = $db->query("SELECT id, name, created_at, updated_at FROM colors ORDER BY name")->fetchAll(PDO::FETCH_ASSOC);
-        $sizes = $db->query("SELECT id, name, created_at, updated_at FROM sizes ORDER BY name")->fetchAll(PDO::FETCH_ASSOC);
+        $colors = $this->db->query("SELECT id, name, created_at, updated_at FROM colors ORDER BY name")->fetchAll(PDO::FETCH_ASSOC);
+        $sizes = $this->db->query("SELECT id, name, created_at, updated_at FROM sizes ORDER BY name")->fetchAll(PDO::FETCH_ASSOC);
 
         return [
             'data' => $productData,
@@ -136,11 +129,9 @@ class Product
     /**
      * Get single product by ID
      */
-    public static function findById($id)
+    public function findById($id)
     {
-        $db = Database::getInstance();
-
-        $stmt = $db->prepare("SELECT * FROM products WHERE id = ? LIMIT 1");
+        $stmt = $this->db->prepare("SELECT * FROM products WHERE id = ? LIMIT 1");
         $stmt->execute([$id]);
         $product = $stmt->fetch(PDO::FETCH_ASSOC);
 
@@ -148,11 +139,11 @@ class Product
             return null;
         }
 
-        $colors = $db->query("SELECT id, name, created_at, updated_at FROM colors ORDER BY name")->fetchAll(PDO::FETCH_ASSOC);
-        $sizes = $db->query("SELECT id, name, created_at, updated_at FROM sizes ORDER BY name")->fetchAll(PDO::FETCH_ASSOC);
+        $colors = $this->db->query("SELECT id, name, created_at, updated_at FROM colors ORDER BY name")->fetchAll(PDO::FETCH_ASSOC);
+        $sizes = $this->db->query("SELECT id, name, created_at, updated_at FROM sizes ORDER BY name")->fetchAll(PDO::FETCH_ASSOC);
 
         return [
-            'data' => self::formatProduct($product),
+            'data' => $this->formatProduct($product),
             'colors' => $colors,
             'sizes' => $sizes
         ];
@@ -161,11 +152,9 @@ class Product
     /**
      * Get single product by slug
      */
-    public static function findBySlug($slug)
+    public function findBySlug($slug)
     {
-        $db = Database::getInstance();
-
-        $stmt = $db->prepare("SELECT * FROM products WHERE slug = ? LIMIT 1");
+        $stmt = $this->db->prepare("SELECT * FROM products WHERE slug = ? LIMIT 1");
         $stmt->execute([$slug]);
         $product = $stmt->fetch(PDO::FETCH_ASSOC);
 
@@ -173,11 +162,11 @@ class Product
             return null;
         }
 
-        $colors = $db->query("SELECT id, name, created_at, updated_at FROM colors ORDER BY name")->fetchAll(PDO::FETCH_ASSOC);
-        $sizes = $db->query("SELECT id, name, created_at, updated_at FROM sizes ORDER BY name")->fetchAll(PDO::FETCH_ASSOC);
+        $colors = $this->db->query("SELECT id, name, created_at, updated_at FROM colors ORDER BY name")->fetchAll(PDO::FETCH_ASSOC);
+        $sizes = $this->db->query("SELECT id, name, created_at, updated_at FROM sizes ORDER BY name")->fetchAll(PDO::FETCH_ASSOC);
 
         return [
-            'data' => self::formatProduct($product),
+            'data' => $this->formatProduct($product),
             'colors' => $colors,
             'sizes' => $sizes
         ];
@@ -186,13 +175,12 @@ class Product
     /**
      * Format product with colors, sizes, and reviews
      */
-    private static function formatProduct($product)
+    private function formatProduct($product)
     {
-        $db = Database::getInstance();
         $productId = $product['id'];
 
         // Get colors with pivot data
-        $colorStmt = $db->prepare("
+        $colorStmt = $this->db->prepare("
             SELECT c.id, c.name, c.created_at, c.updated_at,
                    pc.product_id, pc.color_id
             FROM colors c
@@ -217,7 +205,7 @@ class Product
         }
 
         // Get sizes with pivot data
-        $sizeStmt = $db->prepare("
+        $sizeStmt = $this->db->prepare("
             SELECT s.id, s.name, s.created_at, s.updated_at,
                    ps.product_id, ps.size_id
             FROM sizes s
