@@ -19,8 +19,8 @@ class ProductController
         return [
             'success' => true,
             'product' => $product['data']['data'] ?? null,
-            'colors' => $product['data']['colors'] ?? [],
-            'sizes' => $product['data']['sizes'] ?? []
+            'colors' => $product['data']['data']['colors'] ?? [],
+            'sizes' => $product['data']['data']['sizes'] ?? []
         ];
     }
 }
