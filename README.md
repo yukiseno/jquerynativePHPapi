@@ -98,7 +98,7 @@ jquerynativePHPapi/
 │   ├── api.php                 # PHP session AJAX handler
 │   └── ...
 │
-├── start.sh                    # Start both servers
+├── start.php                   # Start both servers (cross-platform)
 ├── README.md
 └── ...
 ```
@@ -120,10 +120,10 @@ cd ..
 ### 2. Start Both Servers
 
 ```bash
-./start.sh
+php start.php
 ```
 
-This starts:
+This works on **Mac, Linux, and Windows** and starts:
 
 - **Frontend:** http://localhost:3000
 - **Backend API:** http://localhost:3001

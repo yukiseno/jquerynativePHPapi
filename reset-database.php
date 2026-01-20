@@ -26,10 +26,21 @@ if (file_exists($envFile)) {
 
 // Reset based on database type
 if ($dbType === 'mysql') {
-    // For MySQL, drop all tables
+    // For MySQL, create database if it doesn't exist, then drop all tables
     echo "🔄 Resetting MySQL database...\n";
 
     try {
+        // First, create database if it doesn't exist (connect without db name)
+        $host = getenv('DB_HOST') ?: '127.0.0.1';
+        $user = getenv('DB_USER') ?: 'root';
+        $pass = getenv('DB_PASS') ?: '';
+        $dbname = getenv('DB_NAME') ?: 'ecommerce';
+
+        $pdo = new PDO("mysql:host=$host", $user, $pass);
+        $pdo->exec("CREATE DATABASE IF NOT EXISTS `$dbname`");
+        echo "✓ Database '$dbname' created or already exists\n";
+
+        // Now connect to the database and drop tables
         $db = Database::getInstance();
 
         // Drop tables in correct order (due to foreign keys)
