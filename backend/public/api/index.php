@@ -28,29 +28,14 @@ require_once __DIR__ . '/../../classes/Product.php';
 require_once __DIR__ . '/../../classes/User.php';
 require_once __DIR__ . '/../../classes/Order.php';
 
+// Load middleware and helpers
+require_once __DIR__ . '/../../middleware.php';
+
 // Parse request
 $method = $_SERVER['REQUEST_METHOD'];
 $path = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
 $path = preg_replace('/^\/api/', '', $path);
 $path = trim($path, '/');
-
-// Helper function to get Bearer token
-function getBearerToken()
-{
-    $headers = getallheaders();
-    if (isset($headers['Authorization'])) {
-        if (preg_match('/Bearer\s+(\S+)/', $headers['Authorization'], $matches)) {
-            return $matches[1];
-        }
-    }
-    return null;
-}
-
-// Helper function to get JSON body
-function getJsonBody()
-{
-    return json_decode(file_get_contents('php://input'), true) ?? [];
-}
 
 // USER REGISTER
 if ($method === 'POST' && $path === 'user/register') {
@@ -270,25 +255,8 @@ if ($method === 'GET' && preg_match('/^product\/(.+)\/slug$/', $path, $matches))
 
 // POST create order
 if ($method === 'POST' && $path === 'orders/store') {
-    $token = getBearerToken();
-    $user = null;
-
-    if ($token) {
-        try {
-            $userObj = new User();
-            $user = $userObj->verifyToken($token);
-        } catch (Exception $e) {
-            http_response_code(401);
-            echo json_encode(['error' => 'Unauthorized']);
-            exit;
-        }
-    }
-
-    if (!$user) {
-        http_response_code(401);
-        echo json_encode(['error' => 'Authentication required']);
-        exit;
-    }
+    $auth = verifyUserToken();
+    $user = $auth['user'];
 
     $data = json_decode(file_get_contents('php://input'), true);
 
@@ -332,25 +300,8 @@ if ($method === 'POST' && $path === 'orders/store') {
 
 // GET user orders
 if ($method === 'GET' && $path === 'user/orders') {
-    $token = getBearerToken();
-    $user = null;
-
-    if ($token) {
-        try {
-            $userObj = new User();
-            $user = $userObj->verifyToken($token);
-        } catch (Exception $e) {
-            http_response_code(401);
-            echo json_encode(['error' => 'Unauthorized']);
-            exit;
-        }
-    }
-
-    if (!$user) {
-        http_response_code(401);
-        echo json_encode(['error' => 'Authentication required']);
-        exit;
-    }
+    $auth = verifyUserToken();
+    $user = $auth['user'];
 
     try {
         $orderObj = new Order();
@@ -369,25 +320,8 @@ if ($method === 'GET' && $path === 'user/orders') {
 // Get single order by ID
 if ($method === 'GET' && preg_match('/^orders\/(\d+)$/', $path, $matches)) {
     $orderId = $matches[1];
-    $token = getBearerToken();
-    $user = null;
-
-    if ($token) {
-        try {
-            $userObj = new User();
-            $user = $userObj->verifyToken($token);
-        } catch (Exception $e) {
-            http_response_code(401);
-            echo json_encode(['error' => 'Unauthorized']);
-            exit;
-        }
-    }
-
-    if (!$user) {
-        http_response_code(401);
-        echo json_encode(['error' => 'Authentication required']);
-        exit;
-    }
+    $auth = verifyUserToken();
+    $user = $auth['user'];
 
     try {
         $orderObj = new Order();
@@ -419,25 +353,9 @@ if ($method === 'GET' && preg_match('/^orders\/(\d+)$/', $path, $matches)) {
 
 // GET user profile
 if ($method === 'GET' && $path === 'user/profile') {
-    $token = getBearerToken();
-    $user = null;
-
-    if ($token) {
-        try {
-            $userObj = new User();
-            $user = $userObj->verifyToken($token);
-        } catch (Exception $e) {
-            http_response_code(401);
-            echo json_encode(['error' => 'Unauthorized']);
-            exit;
-        }
-    }
-
-    if (!$user) {
-        http_response_code(401);
-        echo json_encode(['error' => 'Authentication required']);
-        exit;
-    }
+    $auth = verifyUserToken();
+    $userObj = $auth['userObj'];
+    $user = $auth['user'];
 
     try {
         // Fetch latest user info from database - reuse existing instance
@@ -456,25 +374,9 @@ if ($method === 'GET' && $path === 'user/profile') {
 
 // Update user profile
 if ($method === 'POST' && $path === 'user/profile/update') {
-    $token = getBearerToken();
-    $user = null;
-
-    if ($token) {
-        try {
-            $userObj = new User();
-            $user = $userObj->verifyToken($token);
-        } catch (Exception $e) {
-            http_response_code(401);
-            echo json_encode(['error' => 'Unauthorized']);
-            exit;
-        }
-    }
-
-    if (!$user) {
-        http_response_code(401);
-        echo json_encode(['error' => 'Authentication required']);
-        exit;
-    }
+    $auth = verifyUserToken();
+    $userObj = $auth['userObj'];
+    $user = $auth['user'];
 
     $data = json_decode(file_get_contents('php://input'), true);
 

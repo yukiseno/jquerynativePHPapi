@@ -111,9 +111,9 @@ function applyCoupon() {
 
         showCouponMessage(
           `Coupon "${couponCode}" applied! Discount: ${discountPercent}% ($${discountDollars.toFixed(
-            2
+            2,
           )})`,
-          "success"
+          "success",
         );
         // Update UI - show remove button, disable input
         $("#couponInput").prop("disabled", true);
@@ -127,7 +127,7 @@ function applyCoupon() {
     error: function (xhr) {
       showCouponMessage(
         xhr.responseJSON?.error || "Invalid or expired coupon",
-        "danger"
+        "danger",
       );
       appliedCoupon = null;
       localStorage.removeItem("appliedCoupon");
@@ -157,7 +157,7 @@ function removeCoupon() {
 
 function showCouponMessage(message, type) {
   $("#couponMessage").html(
-    `<div class="alert alert-${type} small">${message}</div>`
+    `<div class="alert alert-${type} small">${message}</div>`,
   );
   setTimeout(() => $("#couponMessage").html(""), 5000);
 }
@@ -236,7 +236,7 @@ function loadBillingAddress() {
       Authorization: "Bearer " + token,
     },
     success: function (response) {
-      if (response.success && response.data) {
+      if (response.data) {
         const user = response.data;
         $("#phoneNumber").val(user.phone_number || "");
         $("#address").val(user.address || "");
@@ -266,7 +266,7 @@ function loadAppliedCoupon() {
       `Coupon "${appliedCoupon.code}" applied! Discount: $${(
         appliedCoupon.discount_amount / 100
       ).toFixed(2)}`,
-      "success"
+      "success",
     );
   }
 }
