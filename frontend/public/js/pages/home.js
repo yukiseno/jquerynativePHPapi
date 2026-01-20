@@ -37,7 +37,7 @@ function loadProducts() {
   fetch(url)
     .then((response) => response.json())
     .then((data) => {
-      const products = data.data || [];
+      const products = data.data?.data || [];
       // Hide skeleton loader
       document.getElementById("skeletonLoader").style.display = "none";
       if (products.length === 0) {

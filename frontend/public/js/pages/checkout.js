@@ -236,7 +236,7 @@ function loadBillingAddress() {
       Authorization: "Bearer " + token,
     },
     success: function (response) {
-      if (response.data) {
+      if (response.success) {
         const user = response.data;
         $("#phoneNumber").val(user.phone_number || "");
         $("#address").val(user.address || "");

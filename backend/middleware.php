@@ -43,7 +43,7 @@ function apiError($message, $code = 400)
 function apiSuccess($data = null, $message = null, $code = 200)
 {
     http_response_code($code);
-    $response = [];
+    $response = ['success' => true];
 
     if ($message) {
         $response['message'] = $message;
@@ -51,10 +51,6 @@ function apiSuccess($data = null, $message = null, $code = 200)
 
     if ($data !== null) {
         $response['data'] = $data;
-    }
-
-    if (empty($response)) {
-        $response['success'] = true;
     }
 
     echo json_encode($response);

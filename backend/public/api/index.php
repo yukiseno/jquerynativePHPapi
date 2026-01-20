@@ -5,8 +5,17 @@ header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
 header('Access-Control-Allow-Headers: Content-Type, Authorization');
 
+// HTTP Status Code Constants
+const HTTP_OK = 200;
+const HTTP_CREATED = 201;
+const HTTP_BAD_REQUEST = 400;
+const HTTP_UNAUTHORIZED = 401;
+const HTTP_FORBIDDEN = 403;
+const HTTP_NOT_FOUND = 404;
+const HTTP_SERVER_ERROR = 500;
+
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-    http_response_code(200);
+    http_response_code(HTTP_OK);
     exit;
 }
 
@@ -45,16 +54,16 @@ if ($method === 'POST' && $path === 'user/register') {
     $password = $body['password'] ?? null;
 
     if (!$name || !$email || !$password) {
-        apiError('Name, email, and password are required', 400);
+        apiError('Name, email, and password are required', HTTP_BAD_REQUEST);
     }
 
     $user = new User();
     $result = $user->register($name, $email, $password);
 
     if ($result['success']) {
-        apiSuccess(null, $result['message'], 201);
+        apiSuccess(null, $result['message'], HTTP_CREATED);
     } else {
-        apiError($result['message'], 400);
+        apiError($result['message'], HTTP_BAD_REQUEST);
     }
 }
 
@@ -65,7 +74,7 @@ if ($method === 'POST' && $path === 'user/login') {
     $password = $body['password'] ?? null;
 
     if (!$email || !$password) {
-        apiError('Email and password are required', 400);
+        apiError('Email and password are required', HTTP_BAD_REQUEST);
     }
 
     $user = new User();
@@ -75,9 +84,9 @@ if ($method === 'POST' && $path === 'user/login') {
         apiSuccess([
             'user' => $result['user'],
             'access_token' => $result['access_token']
-        ], null, 200);
+        ], null, HTTP_OK);
     } else {
-        apiError($result['message'], 401);
+        apiError($result['message'], HTTP_UNAUTHORIZED);
     }
 }
 
@@ -86,16 +95,16 @@ if ($method === 'POST' && $path === 'user/logout') {
     $token = getBearerToken();
 
     if (!$token) {
-        apiError('Unauthorized', 401);
+        apiError('Unauthorized', HTTP_UNAUTHORIZED);
     }
 
     $user = new User();
     $result = $user->logout($token);
 
     if ($result['success']) {
-        apiSuccess(null, $result['message'], 200);
+        apiSuccess(null, $result['message'], HTTP_OK);
     } else {
-        apiError($result['message'], 400);
+        apiError($result['message'], HTTP_BAD_REQUEST);
     }
 }
 
@@ -105,7 +114,7 @@ if ($method === 'POST' && $path === 'apply/coupon') {
     $couponCode = $body['coupon_code'] ?? $body['name'] ?? null;
 
     if (!$couponCode) {
-        apiError('Coupon code is required', 400);
+        apiError('Coupon code is required', HTTP_BAD_REQUEST);
     }
 
     try {
@@ -113,16 +122,16 @@ if ($method === 'POST' && $path === 'apply/coupon') {
         $coupon = $couponObj->findByName($couponCode);
 
         if (!$coupon) {
-            apiError('Invalid or expired coupon', 400);
+            apiError('Invalid or expired coupon', HTTP_BAD_REQUEST);
         }
 
         if (!$coupon->isValid()) {
-            apiError('Invalid or expired coupon', 400);
+            apiError('Invalid or expired coupon', HTTP_BAD_REQUEST);
         }
 
-        apiSuccess($coupon->toApiArray(), 'Coupon applied successfully', 200);
+        apiSuccess($coupon->toApiArray(), 'Coupon applied successfully', HTTP_OK);
     } catch (Exception $e) {
-        apiError('Server error: ' . $e->getMessage(), 500);
+        apiError('Server error: ' . $e->getMessage(), HTTP_SERVER_ERROR);
     }
 }
 
@@ -131,9 +140,9 @@ if ($method === 'GET' && $path === 'products') {
     try {
         $product = new Product();
         $result = $product->getAll();
-        apiSuccess($result, null, 200);
+        apiSuccess($result, null, HTTP_OK);
     } catch (Exception $e) {
-        apiError('Server error: ' . $e->getMessage(), 500);
+        apiError('Server error: ' . $e->getMessage(), HTTP_SERVER_ERROR);
     }
 }
 
@@ -143,9 +152,9 @@ if ($method === 'GET' && preg_match('/^products\/(\d+)\/color$/', $path, $matche
     try {
         $product = new Product();
         $result = $product->filterByColor($colorId);
-        apiSuccess($result, null, 200);
+        apiSuccess($result, null, HTTP_OK);
     } catch (Exception $e) {
-        apiError('Server error: ' . $e->getMessage(), 500);
+        apiError('Server error: ' . $e->getMessage(), HTTP_SERVER_ERROR);
     }
 }
 
@@ -155,9 +164,9 @@ if ($method === 'GET' && preg_match('/^products\/(\d+)\/size$/', $path, $matches
     try {
         $product = new Product();
         $result = $product->filterBySize($sizeId);
-        apiSuccess($result, null, 200);
+        apiSuccess($result, null, HTTP_OK);
     } catch (Exception $e) {
-        apiError('Server error: ' . $e->getMessage(), 500);
+        apiError('Server error: ' . $e->getMessage(), HTTP_SERVER_ERROR);
     }
 }
 
@@ -167,9 +176,9 @@ if ($method === 'GET' && preg_match('/^products\/(.+)\/find$/', $path, $matches)
     try {
         $product = new Product();
         $result = $product->findByTerm($searchTerm);
-        apiSuccess($result, null, 200);
+        apiSuccess($result, null, HTTP_OK);
     } catch (Exception $e) {
-        apiError('Server error: ' . $e->getMessage(), 500);
+        apiError('Server error: ' . $e->getMessage(), HTTP_SERVER_ERROR);
     }
 }
 
@@ -180,11 +189,11 @@ if ($method === 'GET' && preg_match('/^product\/(\d+)\/show$/', $path, $matches)
         $product = new Product();
         $result = $product->findById($productId);
         if (!$result) {
-            apiError('Product not found', 404);
+            apiError('Product not found', HTTP_NOT_FOUND);
         }
-        apiSuccess($result, null, 200);
+        apiSuccess($result, null, HTTP_OK);
     } catch (Exception $e) {
-        apiError('Server error: ' . $e->getMessage(), 500);
+        apiError('Server error: ' . $e->getMessage(), HTTP_SERVER_ERROR);
     }
 }
 
@@ -195,11 +204,11 @@ if ($method === 'GET' && preg_match('/^product\/(.+)\/slug$/', $path, $matches))
         $product = new Product();
         $result = $product->findBySlug($slug);
         if (!$result) {
-            apiError('Product not found', 404);
+            apiError('Product not found', HTTP_NOT_FOUND);
         }
-        apiSuccess($result, null, 200);
+        apiSuccess($result, null, HTTP_OK);
     } catch (Exception $e) {
-        apiError('Server error: ' . $e->getMessage(), 500);
+        apiError('Server error: ' . $e->getMessage(), HTTP_SERVER_ERROR);
     }
 }
 
@@ -213,13 +222,13 @@ if ($method === 'POST' && $path === 'orders/store') {
     try {
         // Validate input
         if (empty($data['cartItems']) || !is_array($data['cartItems'])) {
-            apiError('Invalid cart items', 400);
+            apiError('Invalid cart items', HTTP_BAD_REQUEST);
         }
 
         // Validate each cart item has required fields
         foreach ($data['cartItems'] as $item) {
             if (empty($item['id']) || empty($item['colorId']) || empty($item['sizeId'])) {
-                apiError('Cart items must have id, colorId, and sizeId', 400);
+                apiError('Cart items must have id, colorId, and sizeId', HTTP_BAD_REQUEST);
             }
         }
 
@@ -232,9 +241,9 @@ if ($method === 'POST' && $path === 'orders/store') {
             'couponId' => $data['couponId'] ?? null
         ]);
 
-        apiSuccess($order, 'Order placed successfully', 201);
+        apiSuccess($order, 'Order placed successfully', HTTP_CREATED);
     } catch (Exception $e) {
-        apiError('Server error: ' . $e->getMessage(), 500);
+        apiError('Server error: ' . $e->getMessage(), HTTP_SERVER_ERROR);
     }
 }
 
@@ -246,9 +255,9 @@ if ($method === 'GET' && $path === 'user/orders') {
     try {
         $orderObj = new Order();
         $orders = $orderObj->getUserOrders($user['id']);
-        apiSuccess($orders, null, 200);
+        apiSuccess($orders, null, HTTP_OK);
     } catch (Exception $e) {
-        apiError('Server error: ' . $e->getMessage(), 500);
+        apiError('Server error: ' . $e->getMessage(), HTTP_SERVER_ERROR);
     }
 }
 
@@ -263,17 +272,17 @@ if ($method === 'GET' && preg_match('/^orders\/(\d+)$/', $path, $matches)) {
         $order = $orderObj->getOrderById($orderId);
 
         if (!$order) {
-            apiError('Order not found', 404);
+            apiError('Order not found', HTTP_NOT_FOUND);
         }
 
         // Verify order belongs to user
         if ($order['order']['user_id'] !== $user['id']) {
-            apiError('Forbidden', 403);
+            apiError('Forbidden', HTTP_FORBIDDEN);
         }
 
-        apiSuccess(array_merge($order['order'], ['items' => $order['items']]), null, 200);
+        apiSuccess(array_merge($order['order'], ['items' => $order['items']]), null, HTTP_OK);
     } catch (Exception $e) {
-        apiError('Server error: ' . $e->getMessage(), 500);
+        apiError('Server error: ' . $e->getMessage(), HTTP_SERVER_ERROR);
     }
 }
 
@@ -287,9 +296,9 @@ if ($method === 'GET' && $path === 'user/profile') {
         // Fetch latest user info from database - reuse existing instance
         $updatedUser = $userObj->findById($user['id']);
 
-        apiSuccess($updatedUser, null, 200);
+        apiSuccess($updatedUser, null, HTTP_OK);
     } catch (Exception $e) {
-        apiError('Server error: ' . $e->getMessage(), 500);
+        apiError('Server error: ' . $e->getMessage(), HTTP_SERVER_ERROR);
     }
 }
 
@@ -305,8 +314,8 @@ if ($method === 'POST' && $path === 'user/profile/update') {
         // Reuse existing instance
         $updatedUser = $userObj->updateProfile($user['id'], $data);
 
-        apiSuccess($updatedUser, null, 200);
+        apiSuccess($updatedUser, null, HTTP_OK);
     } catch (Exception $e) {
-        apiError('Server error: ' . $e->getMessage(), 500);
+        apiError('Server error: ' . $e->getMessage(), HTTP_SERVER_ERROR);
     }
 }
