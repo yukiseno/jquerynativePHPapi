@@ -440,8 +440,7 @@ if ($method === 'GET' && $path === 'user/profile') {
     }
 
     try {
-        // Fetch latest user info from database
-        $userObj = new User();
+        // Fetch latest user info from database - reuse existing instance
         $updatedUser = $userObj->findById($user['id']);
 
         http_response_code(200);
@@ -480,7 +479,7 @@ if ($method === 'POST' && $path === 'user/profile/update') {
     $data = json_decode(file_get_contents('php://input'), true);
 
     try {
-        $userObj = new User();
+        // Reuse existing instance
         $updatedUser = $userObj->updateProfile($user['id'], $data);
 
         http_response_code(200);
