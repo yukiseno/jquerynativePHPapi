@@ -28,6 +28,40 @@ function getJsonBody()
 }
 
 /**
+ * Send standardized error response
+ */
+function apiError($message, $code = 400)
+{
+    http_response_code($code);
+    echo json_encode(['error' => $message]);
+    exit;
+}
+
+/**
+ * Send standardized success response
+ */
+function apiSuccess($data = null, $message = null, $code = 200)
+{
+    http_response_code($code);
+    $response = [];
+
+    if ($message) {
+        $response['message'] = $message;
+    }
+
+    if ($data !== null) {
+        $response['data'] = $data;
+    }
+
+    if (empty($response)) {
+        $response['success'] = true;
+    }
+
+    echo json_encode($response);
+    exit;
+}
+
+/**
  * Verify Bearer token and return authenticated user
  * Returns array with 'userObj' and 'user' keys
  * Exits with 401 error if token is invalid
@@ -37,9 +71,7 @@ function verifyUserToken()
     $token = getBearerToken();
 
     if (!$token) {
-        http_response_code(401);
-        echo json_encode(['error' => 'Unauthorized']);
-        exit;
+        apiError('Unauthorized', 401);
     }
 
     try {
@@ -47,15 +79,11 @@ function verifyUserToken()
         $user = $userObj->verifyToken($token);
 
         if (!$user) {
-            http_response_code(401);
-            echo json_encode(['error' => 'Unauthorized']);
-            exit;
+            apiError('Unauthorized', 401);
         }
 
         return array('userObj' => $userObj, 'user' => $user);
     } catch (Exception $e) {
-        http_response_code(401);
-        echo json_encode(['error' => 'Unauthorized']);
-        exit;
+        apiError('Unauthorized', 401);
     }
 }

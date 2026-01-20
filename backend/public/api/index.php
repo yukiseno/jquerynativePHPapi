@@ -45,22 +45,17 @@ if ($method === 'POST' && $path === 'user/register') {
     $password = $body['password'] ?? null;
 
     if (!$name || !$email || !$password) {
-        http_response_code(400);
-        echo json_encode(['error' => 'Name, email, and password are required']);
-        exit;
+        apiError('Name, email, and password are required', 400);
     }
 
     $user = new User();
     $result = $user->register($name, $email, $password);
 
     if ($result['success']) {
-        http_response_code(201);
-        echo json_encode(['message' => $result['message']]);
+        apiSuccess(null, $result['message'], 201);
     } else {
-        http_response_code(400);
-        echo json_encode(['error' => $result['message']]);
+        apiError($result['message'], 400);
     }
-    exit;
 }
 
 // USER LOGIN
@@ -70,25 +65,20 @@ if ($method === 'POST' && $path === 'user/login') {
     $password = $body['password'] ?? null;
 
     if (!$email || !$password) {
-        http_response_code(400);
-        echo json_encode(['error' => 'Email and password are required']);
-        exit;
+        apiError('Email and password are required', 400);
     }
 
     $user = new User();
     $result = $user->login($email, $password);
 
     if ($result['success']) {
-        http_response_code(200);
-        echo json_encode([
+        apiSuccess([
             'user' => $result['user'],
             'access_token' => $result['access_token']
-        ]);
+        ], null, 200);
     } else {
-        http_response_code(401);
-        echo json_encode(['error' => $result['message']]);
+        apiError($result['message'], 401);
     }
-    exit;
 }
 
 // USER LOGOUT
@@ -96,22 +86,17 @@ if ($method === 'POST' && $path === 'user/logout') {
     $token = getBearerToken();
 
     if (!$token) {
-        http_response_code(401);
-        echo json_encode(['error' => 'Unauthorized']);
-        exit;
+        apiError('Unauthorized', 401);
     }
 
     $user = new User();
     $result = $user->logout($token);
 
     if ($result['success']) {
-        http_response_code(200);
-        echo json_encode(['message' => $result['message']]);
+        apiSuccess(null, $result['message'], 200);
     } else {
-        http_response_code(400);
-        echo json_encode(['error' => $result['message']]);
+        apiError($result['message'], 400);
     }
-    exit;
 }
 
 // API Routes
@@ -120,9 +105,7 @@ if ($method === 'POST' && $path === 'apply/coupon') {
     $couponCode = $body['coupon_code'] ?? $body['name'] ?? null;
 
     if (!$couponCode) {
-        http_response_code(400);
-        echo json_encode(['error' => 'Coupon code is required']);
-        exit;
+        apiError('Coupon code is required', 400);
     }
 
     try {
@@ -130,28 +113,17 @@ if ($method === 'POST' && $path === 'apply/coupon') {
         $coupon = $couponObj->findByName($couponCode);
 
         if (!$coupon) {
-            http_response_code(400);
-            echo json_encode(['error' => 'Invalid or expired coupon']);
-            exit;
+            apiError('Invalid or expired coupon', 400);
         }
 
         if (!$coupon->isValid()) {
-            http_response_code(400);
-            echo json_encode(['error' => 'Invalid or expired coupon']);
-            exit;
+            apiError('Invalid or expired coupon', 400);
         }
 
-        http_response_code(200);
-        echo json_encode([
-            'success' => true,
-            'message' => 'Coupon applied successfully',
-            'data' => $coupon->toApiArray()
-        ]);
+        apiSuccess($coupon->toApiArray(), 'Coupon applied successfully', 200);
     } catch (Exception $e) {
-        http_response_code(500);
-        echo json_encode(['error' => 'Server error: ' . $e->getMessage()]);
+        apiError('Server error: ' . $e->getMessage(), 500);
     }
-    exit;
 }
 
 // GET all products
@@ -159,13 +131,10 @@ if ($method === 'GET' && $path === 'products') {
     try {
         $product = new Product();
         $result = $product->getAll();
-        http_response_code(200);
-        echo json_encode($result);
+        apiSuccess($result, null, 200);
     } catch (Exception $e) {
-        http_response_code(500);
-        echo json_encode(['error' => 'Server error: ' . $e->getMessage()]);
+        apiError('Server error: ' . $e->getMessage(), 500);
     }
-    exit;
 }
 
 // GET products by color
@@ -174,13 +143,10 @@ if ($method === 'GET' && preg_match('/^products\/(\d+)\/color$/', $path, $matche
     try {
         $product = new Product();
         $result = $product->filterByColor($colorId);
-        http_response_code(200);
-        echo json_encode($result);
+        apiSuccess($result, null, 200);
     } catch (Exception $e) {
-        http_response_code(500);
-        echo json_encode(['error' => 'Server error: ' . $e->getMessage()]);
+        apiError('Server error: ' . $e->getMessage(), 500);
     }
-    exit;
 }
 
 // GET products by size
@@ -189,13 +155,10 @@ if ($method === 'GET' && preg_match('/^products\/(\d+)\/size$/', $path, $matches
     try {
         $product = new Product();
         $result = $product->filterBySize($sizeId);
-        http_response_code(200);
-        echo json_encode($result);
+        apiSuccess($result, null, 200);
     } catch (Exception $e) {
-        http_response_code(500);
-        echo json_encode(['error' => 'Server error: ' . $e->getMessage()]);
+        apiError('Server error: ' . $e->getMessage(), 500);
     }
-    exit;
 }
 
 // GET products by search term
@@ -204,13 +167,10 @@ if ($method === 'GET' && preg_match('/^products\/(.+)\/find$/', $path, $matches)
     try {
         $product = new Product();
         $result = $product->findByTerm($searchTerm);
-        http_response_code(200);
-        echo json_encode($result);
+        apiSuccess($result, null, 200);
     } catch (Exception $e) {
-        http_response_code(500);
-        echo json_encode(['error' => 'Server error: ' . $e->getMessage()]);
+        apiError('Server error: ' . $e->getMessage(), 500);
     }
-    exit;
 }
 
 // GET single product
@@ -220,17 +180,12 @@ if ($method === 'GET' && preg_match('/^product\/(\d+)\/show$/', $path, $matches)
         $product = new Product();
         $result = $product->findById($productId);
         if (!$result) {
-            http_response_code(404);
-            echo json_encode(['error' => 'Product not found']);
-            exit;
+            apiError('Product not found', 404);
         }
-        http_response_code(200);
-        echo json_encode($result);
+        apiSuccess($result, null, 200);
     } catch (Exception $e) {
-        http_response_code(500);
-        echo json_encode(['error' => 'Server error: ' . $e->getMessage()]);
+        apiError('Server error: ' . $e->getMessage(), 500);
     }
-    exit;
 }
 
 // GET single product by slug
@@ -240,17 +195,12 @@ if ($method === 'GET' && preg_match('/^product\/(.+)\/slug$/', $path, $matches))
         $product = new Product();
         $result = $product->findBySlug($slug);
         if (!$result) {
-            http_response_code(404);
-            echo json_encode(['error' => 'Product not found']);
-            exit;
+            apiError('Product not found', 404);
         }
-        http_response_code(200);
-        echo json_encode($result);
+        apiSuccess($result, null, 200);
     } catch (Exception $e) {
-        http_response_code(500);
-        echo json_encode(['error' => 'Server error: ' . $e->getMessage()]);
+        apiError('Server error: ' . $e->getMessage(), 500);
     }
-    exit;
 }
 
 // POST create order
@@ -263,17 +213,13 @@ if ($method === 'POST' && $path === 'orders/store') {
     try {
         // Validate input
         if (empty($data['cartItems']) || !is_array($data['cartItems'])) {
-            http_response_code(400);
-            echo json_encode(['error' => 'Invalid cart items']);
-            exit;
+            apiError('Invalid cart items', 400);
         }
 
         // Validate each cart item has required fields
         foreach ($data['cartItems'] as $item) {
             if (empty($item['id']) || empty($item['colorId']) || empty($item['sizeId'])) {
-                http_response_code(400);
-                echo json_encode(['error' => 'Cart items must have id, colorId, and sizeId']);
-                exit;
+                apiError('Cart items must have id, colorId, and sizeId', 400);
             }
         }
 
@@ -286,16 +232,10 @@ if ($method === 'POST' && $path === 'orders/store') {
             'couponId' => $data['couponId'] ?? null
         ]);
 
-        http_response_code(201);
-        echo json_encode([
-            'message' => 'Order placed successfully',
-            'data' => $order
-        ]);
+        apiSuccess($order, 'Order placed successfully', 201);
     } catch (Exception $e) {
-        http_response_code(500);
-        echo json_encode(['error' => 'Server error: ' . $e->getMessage()]);
+        apiError('Server error: ' . $e->getMessage(), 500);
     }
-    exit;
 }
 
 // GET user orders
@@ -306,15 +246,10 @@ if ($method === 'GET' && $path === 'user/orders') {
     try {
         $orderObj = new Order();
         $orders = $orderObj->getUserOrders($user['id']);
-        http_response_code(200);
-        echo json_encode([
-            'data' => $orders
-        ]);
+        apiSuccess($orders, null, 200);
     } catch (Exception $e) {
-        http_response_code(500);
-        echo json_encode(['error' => 'Server error: ' . $e->getMessage()]);
+        apiError('Server error: ' . $e->getMessage(), 500);
     }
-    exit;
 }
 
 // Get single order by ID
@@ -328,27 +263,18 @@ if ($method === 'GET' && preg_match('/^orders\/(\d+)$/', $path, $matches)) {
         $order = $orderObj->getOrderById($orderId);
 
         if (!$order) {
-            http_response_code(404);
-            echo json_encode(['error' => 'Order not found']);
-            exit;
+            apiError('Order not found', 404);
         }
 
         // Verify order belongs to user
         if ($order['order']['user_id'] !== $user['id']) {
-            http_response_code(403);
-            echo json_encode(['error' => 'Forbidden']);
-            exit;
+            apiError('Forbidden', 403);
         }
 
-        http_response_code(200);
-        echo json_encode([
-            'data' => array_merge($order['order'], ['items' => $order['items']])
-        ]);
+        apiSuccess(array_merge($order['order'], ['items' => $order['items']]), null, 200);
     } catch (Exception $e) {
-        http_response_code(500);
-        echo json_encode(['error' => 'Server error: ' . $e->getMessage()]);
+        apiError('Server error: ' . $e->getMessage(), 500);
     }
-    exit;
 }
 
 // GET user profile
@@ -361,15 +287,10 @@ if ($method === 'GET' && $path === 'user/profile') {
         // Fetch latest user info from database - reuse existing instance
         $updatedUser = $userObj->findById($user['id']);
 
-        http_response_code(200);
-        echo json_encode([
-            'data' => $updatedUser
-        ]);
+        apiSuccess($updatedUser, null, 200);
     } catch (Exception $e) {
-        http_response_code(500);
-        echo json_encode(['error' => 'Server error: ' . $e->getMessage()]);
+        apiError('Server error: ' . $e->getMessage(), 500);
     }
-    exit;
 }
 
 // Update user profile
@@ -384,13 +305,8 @@ if ($method === 'POST' && $path === 'user/profile/update') {
         // Reuse existing instance
         $updatedUser = $userObj->updateProfile($user['id'], $data);
 
-        http_response_code(200);
-        echo json_encode([
-            'data' => $updatedUser
-        ]);
+        apiSuccess($updatedUser, null, 200);
     } catch (Exception $e) {
-        http_response_code(500);
-        echo json_encode(['error' => 'Server error: ' . $e->getMessage()]);
+        apiError('Server error: ' . $e->getMessage(), 500);
     }
-    exit;
 }
