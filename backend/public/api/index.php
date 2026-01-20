@@ -28,9 +28,6 @@ require_once __DIR__ . '/../../classes/Product.php';
 require_once __DIR__ . '/../../classes/User.php';
 require_once __DIR__ . '/../../classes/Order.php';
 
-// Initialize database
-$database = Database::getInstance();
-
 // Parse request
 $method = $_SERVER['REQUEST_METHOD'];
 $path = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
