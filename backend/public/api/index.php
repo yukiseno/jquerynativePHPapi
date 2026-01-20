@@ -274,7 +274,8 @@ if ($method === 'POST' && $path === 'orders/store') {
 
     if ($token) {
         try {
-            $user = User::verifyToken($token);
+            $userObj = new User();
+            $user = $userObj->verifyToken($token);
         } catch (Exception $e) {
             http_response_code(401);
             echo json_encode(['error' => 'Unauthorized']);
@@ -334,7 +335,8 @@ if ($method === 'GET' && $path === 'user/orders') {
 
     if ($token) {
         try {
-            $user = User::verifyToken($token);
+            $userObj = new User();
+            $user = $userObj->verifyToken($token);
         } catch (Exception $e) {
             http_response_code(401);
             echo json_encode(['error' => 'Unauthorized']);
@@ -369,7 +371,8 @@ if ($method === 'GET' && preg_match('/^orders\/(\d+)$/', $path, $matches)) {
 
     if ($token) {
         try {
-            $user = User::verifyToken($token);
+            $userObj = new User();
+            $user = $userObj->verifyToken($token);
         } catch (Exception $e) {
             http_response_code(401);
             echo json_encode(['error' => 'Unauthorized']);
@@ -433,7 +436,8 @@ if ($method === 'GET' && $path === 'user/profile') {
 
     try {
         // Fetch latest user info from database
-        $updatedUser = User::findById($user['id']);
+        $userObj = new User();
+        $updatedUser = $userObj->findById($user['id']);
 
         http_response_code(200);
         echo json_encode([
@@ -453,7 +457,8 @@ if ($method === 'POST' && $path === 'user/profile/update') {
 
     if ($token) {
         try {
-            $user = User::verifyToken($token);
+            $userObj = new User();
+            $user = $userObj->verifyToken($token);
         } catch (Exception $e) {
             http_response_code(401);
             echo json_encode(['error' => 'Unauthorized']);
@@ -487,7 +492,8 @@ if ($method === 'POST' && $path === 'user/profile/update') {
         ]);
 
         // Return updated user info
-        $updatedUser = User::findById($user['id']);
+        $userObj = new User();
+        $updatedUser = $userObj->findById($user['id']);
 
         http_response_code(200);
         echo json_encode([
