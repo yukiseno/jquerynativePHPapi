@@ -174,7 +174,8 @@ if ($method === 'POST' && $path === 'apply/coupon') {
 // GET all products
 if ($method === 'GET' && $path === 'products') {
     try {
-        $result = Product::getAll();
+        $product = new Product();
+        $result = $product->getAll();
         http_response_code(200);
         echo json_encode($result);
     } catch (Exception $e) {
@@ -188,7 +189,8 @@ if ($method === 'GET' && $path === 'products') {
 if ($method === 'GET' && preg_match('/^products\/(\d+)\/color$/', $path, $matches)) {
     $colorId = $matches[1];
     try {
-        $result = Product::filterByColor($colorId);
+        $product = new Product();
+        $result = $product->filterByColor($colorId);
         http_response_code(200);
         echo json_encode($result);
     } catch (Exception $e) {
@@ -202,7 +204,8 @@ if ($method === 'GET' && preg_match('/^products\/(\d+)\/color$/', $path, $matche
 if ($method === 'GET' && preg_match('/^products\/(\d+)\/size$/', $path, $matches)) {
     $sizeId = $matches[1];
     try {
-        $result = Product::filterBySize($sizeId);
+        $product = new Product();
+        $result = $product->filterBySize($sizeId);
         http_response_code(200);
         echo json_encode($result);
     } catch (Exception $e) {
@@ -216,7 +219,8 @@ if ($method === 'GET' && preg_match('/^products\/(\d+)\/size$/', $path, $matches
 if ($method === 'GET' && preg_match('/^products\/(.+)\/find$/', $path, $matches)) {
     $searchTerm = urldecode($matches[1]);
     try {
-        $result = Product::findByTerm($searchTerm);
+        $product = new Product();
+        $result = $product->findByTerm($searchTerm);
         http_response_code(200);
         echo json_encode($result);
     } catch (Exception $e) {
@@ -230,7 +234,8 @@ if ($method === 'GET' && preg_match('/^products\/(.+)\/find$/', $path, $matches)
 if ($method === 'GET' && preg_match('/^product\/(\d+)\/show$/', $path, $matches)) {
     $productId = $matches[1];
     try {
-        $result = Product::findById($productId);
+        $product = new Product();
+        $result = $product->findById($productId);
         if (!$result) {
             http_response_code(404);
             echo json_encode(['error' => 'Product not found']);
@@ -249,7 +254,8 @@ if ($method === 'GET' && preg_match('/^product\/(\d+)\/show$/', $path, $matches)
 if ($method === 'GET' && preg_match('/^product\/(.+)\/slug$/', $path, $matches)) {
     $slug = $matches[1];
     try {
-        $result = Product::findBySlug($slug);
+        $product = new Product();
+        $result = $product->findBySlug($slug);
         if (!$result) {
             http_response_code(404);
             echo json_encode(['error' => 'Product not found']);
