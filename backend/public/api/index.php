@@ -141,7 +141,8 @@ if ($method === 'POST' && $path === 'apply/coupon') {
     }
 
     try {
-        $coupon = Coupon::findByName($couponCode);
+        $couponObj = new Coupon();
+        $coupon = $couponObj->findByName($couponCode);
 
         if (!$coupon) {
             http_response_code(400);

@@ -101,7 +101,8 @@ if ($method === 'POST' && $route === 'user/login') {
 $couponCode = $body['coupon_code'];
 
 // Use model to fetch data
-$coupon = Coupon::findByName($couponCode);
+$couponObj = new Coupon();
+$coupon = $couponObj->findByName($couponCode);
 
 // Validate
 if (!$coupon || !$coupon->isValid()) {
@@ -115,22 +116,31 @@ return success($coupon->toApiArray());
 ### 4. Model Layer (Coupon.php)
 
 ```php
-public static function findByName($name) {
-    global $database;
+class Coupon {
+    private $db;
+    private $data = [];
 
-    // Parameterized query (prevents SQL injection)
-    $stmt = $database->prepare(
-        "SELECT * FROM coupons WHERE UPPER(name) = UPPER(?)"
-    );
-    $stmt->execute([$name]);
+    public function __construct($data = []) {
+        $this->db = Database::getInstance();  // Initialize once
+        $this->data = $data;
+    }
 
-    // Return Coupon object
-    return new self($database, $stmt->fetch(PDO::FETCH_ASSOC));
-}
+    public function findByName($name) {
+        // Parameterized query (prevents SQL injection)
+        $stmt = $this->db->prepare(
+            "SELECT * FROM coupons WHERE UPPER(name) = UPPER(?)"
+        );
+        $stmt->execute([$name]);
 
-public function isValid() {
-    // Business logic: check if not expired
-    return strtotime($this->data['valid_until']) > time();
+        // Return Coupon object
+        $result = $stmt->fetch(PDO::FETCH_ASSOC);
+        return $result ? new self($result) : null;
+    }
+
+    public function isValid() {
+        // Business logic: check if not expired
+        return strtotime($this->data['valid_until']) > time();
+    }
 }
 ```
 
@@ -824,19 +834,44 @@ public static function getInstance()
 
 **Interview value:** "Demonstrates understanding of common design patterns and when to apply them."
 
-### 2. **Static Factory Methods (Coupon.php)**
+### 2. **Instance Factory Methods (Coupon.php, Product.php, User.php)**
 
 ```php
-public static function findByName($name)
+class Coupon
 {
-    $db = Database::getInstance();
-    // Query logic here
+    private $db;
+    private $data = [];
+
+    public function __construct($data = [])
+    {
+        $this->db = Database::getInstance();  // Initialize once
+        $this->data = $data;
+    }
+
+    public function findByName($name)
+    {
+        // Query logic using $this->db
+        $stmt = $this->db->prepare("SELECT * FROM coupons WHERE UPPER(name) = UPPER(?)");
+        $stmt->execute([$name]);
+        $result = $stmt->fetch(PDO::FETCH_ASSOC);
+        return $result ? new self($result) : null;
+    }
 }
+
+// Usage
+$coupon = new Coupon();
+$result = $coupon->findByName($couponCode);
 ```
 
-**Why:** Clean API for retrieving objects, encapsulates query logic, testable.
+**Why:**
 
-**Interview value:** "Shows knowledge of factory patterns and object creation strategies."
+- Database connection initialized once in constructor, reused for all queries
+- Instance methods are more testable (can mock instance)
+- Self-contained objects declare their own dependencies
+- Follows OOP principles better than static methods
+- Cleaner API - no repeated `Database::getInstance()` calls
+
+**Interview value:** "Shows evolution from procedural to OOP patterns. Instance methods are more maintainable and testable than static factory methods. Each object is self-contained with its dependencies."
 
 ### 3. **Magic Methods (\_\_get in Coupon.php)**
 
