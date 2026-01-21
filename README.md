@@ -204,7 +204,7 @@ GET  /api/product/{id}/show           # Get product by ID
 POST /api/user/register               # Create account
 POST /api/user/login                  # Get bearer token
 GET  /api/user/profile                # Get user info (requires token)
-POST /api/user/profile/update         # Update profile
+PATCH /api/user/profile/update         # Update profile
 ```
 
 ### Orders

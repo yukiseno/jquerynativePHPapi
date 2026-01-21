@@ -74,7 +74,7 @@ function updateProfile() {
 
   $.ajax({
     url: window.API_URL + "/user/profile/update",
-    type: "POST",
+    type: "PATCH",
     contentType: "application/json",
     headers: {
       Authorization: "Bearer " + token,
