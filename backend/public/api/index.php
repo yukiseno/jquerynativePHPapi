@@ -2,7 +2,7 @@
 
 header('Content-Type: application/json');
 header('Access-Control-Allow-Origin: *');
-header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
+header('Access-Control-Allow-Methods: GET, POST, PUT, PATCH, DELETE, OPTIONS');
 header('Access-Control-Allow-Headers: Content-Type, Authorization');
 
 // HTTP Status Code Constants
@@ -303,7 +303,7 @@ if ($method === 'GET' && $path === 'user/profile') {
 }
 
 // Update user profile
-if ($method === 'POST' && $path === 'user/profile/update') {
+if ($method === 'PATCH' && $path === 'user/profile/update') {
     $auth = verifyUserToken();
     $userObj = $auth['userObj'];
     $user = $auth['user'];
