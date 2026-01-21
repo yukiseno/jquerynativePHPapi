@@ -319,3 +319,83 @@ if ($method === 'PATCH' && $path === 'user/profile/update') {
         apiError('Server error: ' . $e->getMessage(), HTTP_SERVER_ERROR);
     }
 }
+
+// Generate 2FA secret
+if ($method === 'GET' && $path === 'user/2fa/setup') {
+    $auth = verifyUserToken();
+    $user = $auth['user'];
+    $userObj = $auth['userObj'];
+
+    try {
+        $result = $userObj->generate2FASecret($user['email']);
+        apiSuccess($result, null, HTTP_OK);
+    } catch (Exception $e) {
+        apiError('Server error: ' . $e->getMessage(), HTTP_SERVER_ERROR);
+    }
+}
+
+// Enable 2FA
+if ($method === 'POST' && $path === 'user/2fa/enable') {
+    $auth = verifyUserToken();
+    $user = $auth['user'];
+    $userObj = $auth['userObj'];
+
+    $data = json_decode(file_get_contents('php://input'), true);
+    $secret = $data['secret'] ?? null;
+    $verificationCode = $data['code'] ?? null;
+
+    if (!$secret || !$verificationCode) {
+        apiError('Secret and code are required', HTTP_BAD_REQUEST);
+    }
+
+    try {
+        $result = $userObj->enable2FA($user['id'], $secret, $verificationCode);
+
+        if ($result['success']) {
+            apiSuccess(null, $result['message'], HTTP_OK);
+        } else {
+            apiError($result['message'], HTTP_BAD_REQUEST);
+        }
+    } catch (Exception $e) {
+        apiError('Server error: ' . $e->getMessage(), HTTP_SERVER_ERROR);
+    }
+}
+
+// Disable 2FA
+if ($method === 'POST' && $path === 'user/2fa/disable') {
+    $auth = verifyUserToken();
+    $user = $auth['user'];
+    $userObj = $auth['userObj'];
+
+    try {
+        $result = $userObj->disable2FA($user['id']);
+        apiSuccess(null, $result['message'], HTTP_OK);
+    } catch (Exception $e) {
+        apiError('Server error: ' . $e->getMessage(), HTTP_SERVER_ERROR);
+    }
+}
+
+// Verify 2FA code (used during login)
+if ($method === 'POST' && $path === 'user/verify-2fa') {
+    $data = json_decode(file_get_contents('php://input'), true);
+    $userId = $data['user_id'] ?? null;
+    $code = $data['code'] ?? null;
+
+    if (!$userId || !$code) {
+        apiError('User ID and code are required', HTTP_BAD_REQUEST);
+    }
+
+    try {
+        $userObj = new User();
+
+        if ($userObj->verify2FACode($userId, $code)) {
+            // Generate temporary token for 2FA verification
+            $tempToken = bin2hex(random_bytes(32));
+            apiSuccess(['verified' => true], '2FA verification successful', HTTP_OK);
+        } else {
+            apiError('Invalid 2FA code', HTTP_UNAUTHORIZED);
+        }
+    } catch (Exception $e) {
+        apiError('Server error: ' . $e->getMessage(), HTTP_SERVER_ERROR);
+    }
+}

@@ -90,7 +90,8 @@ class User
             'zip_code' => $user['zip_code'],
             'phone_number' => $user['phone_number'],
             'profile_image' => $user['profile_image'],
-            'profile_completed' => $user['profile_completed']
+            'profile_completed' => $user['profile_completed'],
+            'two_factor_enabled' => $user['two_factor_enabled'],
         ];
 
         return [
@@ -235,6 +236,102 @@ class User
             return $this->findById($userId);
         } catch (Exception $e) {
             throw $e;
+        }
+    }
+
+    /**
+     * Generate 2FA secret and return QR code URL
+     */
+    public function generate2FASecret($email)
+    {
+        require_once __DIR__ . '/TOTP.php';
+
+        $secret = TOTP::generateSecret();
+        $qrCodeURL = TOTP::getQRCodeURL($secret, $email);
+
+        return [
+            'secret' => $secret,
+            'qrCodeURL' => $qrCodeURL
+        ];
+    }
+
+    /**
+     * Enable 2FA for a user
+     */
+    public function enable2FA($userId, $secret, $verificationCode)
+    {
+        require_once __DIR__ . '/TOTP.php';
+
+        // Verify the code is correct
+        if (!TOTP::verify($secret, $verificationCode)) {
+            return ['success' => false, 'message' => 'Invalid verification code'];
+        }
+
+        // Save the secret to the database
+        try {
+            $stmt = $this->db->prepare(
+                'UPDATE users SET two_factor_secret = ?, two_factor_enabled = 1 WHERE id = ?'
+            );
+            $stmt->execute([$secret, $userId]);
+
+            return ['success' => true, 'message' => '2FA enabled successfully'];
+        } catch (Exception $e) {
+            return ['success' => false, 'message' => 'Failed to enable 2FA'];
+        }
+    }
+
+    /**
+     * Disable 2FA for a user
+     */
+    public function disable2FA($userId)
+    {
+        try {
+            $stmt = $this->db->prepare(
+                'UPDATE users SET two_factor_secret = NULL, two_factor_enabled = 0 WHERE id = ?'
+            );
+            $stmt->execute([$userId]);
+
+            return ['success' => true, 'message' => '2FA disabled successfully'];
+        } catch (Exception $e) {
+            return ['success' => false, 'message' => 'Failed to disable 2FA'];
+        }
+    }
+
+    /**
+     * Verify 2FA code during login
+     */
+    public function verify2FACode($userId, $code)
+    {
+        require_once __DIR__ . '/TOTP.php';
+
+        try {
+            $stmt = $this->db->prepare('SELECT two_factor_secret FROM users WHERE id = ? AND two_factor_enabled = 1');
+            $stmt->execute([$userId]);
+            $result = $stmt->fetch();
+
+            if (!$result) {
+                return false;
+            }
+
+            return TOTP::verify($result['two_factor_secret'], $code);
+        } catch (Exception $e) {
+            return false;
+        }
+    }
+
+    /**
+     * Check if user has 2FA enabled
+     */
+    public function has2FAEnabled($userId)
+    {
+        try {
+            $stmt = $this->db->prepare('SELECT two_factor_enabled FROM users WHERE id = ?');
+            $stmt->execute([$userId]);
+            $result = $stmt->fetch();
+
+            return $result && $result['two_factor_enabled'] == 1;
+        } catch (Exception $e) {
+            return false;
         }
     }
 }

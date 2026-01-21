@@ -16,6 +16,7 @@ A modern, full-stack e-commerce application built with **Native PHP** backend an
 
 - ✅ Native PHP - Pure PHP with PDO, no dependencies
 - ✅ Bearer Token Authentication - Database-backed token-based auth
+- ✅ Two-Factor Authentication (2FA) - TOTP-based (Google Authenticator, Authy, etc.)
 - ✅ RESTful API - Professional HTTP conventions
 - ✅ Product Management - Browse, filter, search
 - ✅ Coupon System - Discount codes with expiry
@@ -26,6 +27,7 @@ A modern, full-stack e-commerce application built with **Native PHP** backend an
 
 - ✅ PHP MVC Architecture - Clean separation of concerns
 - ✅ Server-Side Authentication - PHP sessions with fallback to bearer tokens
+- ✅ Two-Factor Authentication Setup - Easy 2FA enablement/disablement
 - ✅ Clean URLs - `/product/slug` instead of `/?page=product`
 - ✅ Responsive Design - Mobile-friendly with Bootstrap
 - ✅ Client-Side Interactions - jQuery for smooth UX
@@ -182,11 +184,47 @@ XS, S, M, L, XL, XXL
 
 - Bearer token-based API authentication (database-backed)
 - PHP session-based frontend authentication
+- **Two-Factor Authentication (2FA)** - TOTP-based (RFC 6238 compliant)
 - Parameterized SQL queries (prevent SQL injection)
 - Bcrypt password hashing
 - Input validation and sanitization
 - CORS-aware API design
 - Secure session handling
+
+## 🔐 Two-Factor Authentication (2FA)
+
+### Enabling 2FA
+
+Users can enable 2FA on their profile page:
+
+1. Go to **Profile** > **Two-Factor Authentication**
+2. Click **Continue** to start setup
+3. Scan the QR code with your authenticator app (Google Authenticator, Authy, Microsoft Authenticator, etc.)
+4. Or enter the secret key manually if scanning fails
+5. Enter the 6-digit code from your app to verify
+6. 2FA is now enabled!
+
+### During Login
+
+When a user with 2FA enabled logs in:
+
+1. Enter email and password normally
+2. A modal appears asking for the 6-digit code from the authenticator app
+3. Enter the code to complete login
+4. The code must be valid within the 30-second time window
+
+### Disabling 2FA
+
+Users can disable 2FA from their profile page when they no longer need it.
+
+### Technical Details
+
+- Uses TOTP (Time-based One-Time Password) algorithm
+- RFC 6238 compliant
+- 6-digit codes valid for 30 seconds
+- Supports ±1 time window tolerance (60 seconds total)
+- Pure PHP implementation (no external dependencies)
+- Secrets stored securely in database
 
 ## 📊 API Endpoints
 
@@ -204,7 +242,16 @@ GET  /api/product/{id}/show           # Get product by ID
 POST /api/user/register               # Create account
 POST /api/user/login                  # Get bearer token
 GET  /api/user/profile                # Get user info (requires token)
-PATCH /api/user/profile/update         # Update profile
+PATCH /api/user/profile/update         # Update profile (requires token)
+```
+
+### Two-Factor Authentication
+
+```
+GET  /api/user/2fa/setup              # Generate 2FA secret & QR code (requires token)
+POST /api/user/2fa/enable             # Enable 2FA (requires token)
+POST /api/user/2fa/disable            # Disable 2FA (requires token)
+POST /api/user/verify-2fa             # Verify 2FA code during login
 ```
 
 ### Orders
