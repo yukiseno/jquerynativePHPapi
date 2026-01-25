@@ -1,7 +1,17 @@
 <?php
 
-// Database setup script for jQuery Native PHP API
+/**
+ * Database setup script for jQuery Native PHP API
+ * 
+ * Usage:
+ *   php setup.php           # Creates schema only
+ *   php setup.php --seed    # Creates schema + seeds test data
+ */
+
 require_once __DIR__ . '/backend/classes/Database.php';
+
+// Check for --seed flag
+$shouldSeed = in_array('--seed', $argv);
 
 // Load .env file to check DB_TYPE
 $envFile = __DIR__ . '/backend/.env';
@@ -316,9 +326,13 @@ try {
         'message' => 'Database tables created successfully'
     ]);
 
-    // Now run seeder
-    echo "\n\nRunning seeder...\n";
-    require_once __DIR__ . '/backend/seeder.php';
+    // Run seeder if --seed flag is present
+    if ($shouldSeed) {
+        echo "\n🌱 Seeding test data...\n";
+        require_once __DIR__ . '/backend/seeder.php';
+    } else {
+        echo "\n💡 Tip: Run 'php setup.php --seed' to add test data\n";
+    }
 } catch (Exception $e) {
     echo json_encode([
         'success' => false,
