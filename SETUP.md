@@ -287,20 +287,10 @@ jquerynativePHPapi/
 
 - Use real web server (Apache/Nginx)
 - Enable OpCache for PHP
-- Set `DB_TYPE=mysql` for better performance and scalability
 - Use database connection pooling
 - Implement caching layer (Redis)
 - Use CDN for static files (images, CSS, JS)
 - Enable HTTPS with valid SSL certificate
-
-## Next Steps
-
-1. **Run the tests:** Follow the Testing section above
-2. **Explore the code:** Read ARCHITECTURE.md for design patterns, then review [backend/public/api/index.php](backend/public/api/index.php)
-3. **Try API:** Use curl examples above to test endpoints
-4. **Understand Database Adapter Pattern:** Review how backend/classes/DatabaseAdapter.php, MySQLDatabase.php, and SQLiteDatabase.php work together
-5. **Extend features:** Add new endpoints as needed following existing patterns
-6. **Prepare for interview:** Review ARCHITECTURE.md and practice explaining the Database Adapter Pattern
 
 ## Getting Help
 
