@@ -20,8 +20,12 @@
 
                     <hr />
 
-                    <a href="<?= BASE_URL ?>/orders" class="btn btn-outline-primary w-100">
+                    <a href="<?= BASE_URL ?>/orders" class="btn btn-outline-primary w-100 mb-2">
                         View My Orders
+                    </a>
+
+                    <a href="<?= BASE_URL ?>/twofactor" class="btn btn-outline-primary w-100">
+                        Two-Factor Authentication
                     </a>
                 </div>
             </div>

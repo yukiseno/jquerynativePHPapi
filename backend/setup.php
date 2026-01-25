@@ -52,6 +52,8 @@ try {
                 phone_number VARCHAR(20),
                 profile_image VARCHAR(255),
                 profile_completed INT DEFAULT 0,
+                two_factor_enabled INT DEFAULT 0,
+                two_factor_secret VARCHAR(255),
                 created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
                 updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
             )
@@ -186,6 +188,8 @@ try {
                 phone_number TEXT,
                 profile_image TEXT,
                 profile_completed INTEGER DEFAULT 0,
+                two_factor_enabled INTEGER DEFAULT 0,
+                two_factor_secret TEXT,
                 created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
                 updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
             )

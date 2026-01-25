@@ -36,3 +36,33 @@
         </div>
     </div>
 </div>
+
+<!-- 2FA Modal -->
+<div class="modal fade" id="twoFactorModal" tabindex="-1" aria-labelledby="twoFactorLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="twoFactorLabel">Enter 2FA Code</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="twoFactorForm">
+                    <div id="twoFactorError" class="alert alert-danger d-none"></div>
+                    <p class="text-muted small">Enter the 6-digit code from your authenticator app.</p>
+                    <div class="mb-3">
+                        <input
+                            type="text"
+                            class="form-control form-control-lg text-center"
+                            id="twoFactorCode"
+                            placeholder="000000"
+                            maxlength="6"
+                            inputmode="numeric"
+                            autocomplete="off"
+                            required />
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100">Verify</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
