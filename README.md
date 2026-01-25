@@ -101,7 +101,6 @@ jquerynativePHPapi/
 │
 ├── setup.php                   # Initialize database schema
 ├── start.php                   # Start both servers (cross-platform)
-├── reset-database.php          # Reset database
 ├── README.md
 └── ...
 ```

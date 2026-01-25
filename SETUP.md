@@ -16,7 +16,7 @@ git clone https://github.com/yukiseno/jquerynativePHPapi.git
 cd jquerynativePHPapi
 ```
 
-### Step 2: Backend Setup
+### Step 2: Backend Configuration
 
 ```bash
 cd backend
@@ -28,17 +28,27 @@ cp .env.example .env
 nano .env  # or use your preferred editor
 ```
 
-### Step 2b: Initialize Database
+### Step 3: Initialize Database
 
 From the project root directory:
 
 ```bash
+# Create schema only (safe, no data loss)
 php setup.php
+
+# Or create schema + seed test data
+php setup.php --seed
+
+# Or reset (drop all tables) + recreate schema
+php setup.php --reset
+
+# Or reset + seed with test data
+php setup.php --reset --seed
 ```
 
-This works for both **SQLite (default)** and **MySQL**. For MySQL, create your database first, then run the command above.
+This handles both **SQLite** (default) and **MySQL** automatically.
 
-### Step 3: Start Both Servers
+### Step 4: Start Both Servers
 
 **Recommended (One Command):**
 
@@ -46,67 +56,28 @@ This works for both **SQLite (default)** and **MySQL**. For MySQL, create your d
 php start.php
 ```
 
-This automatically starts both servers:
+This automatically starts both servers on your OS (Mac, Linux, Windows):
 
 - **Backend API:** http://localhost:3001
 - **Frontend:** http://localhost:3000
 
-The script detects your OS (Mac, Linux, Windows) and handles startup automatically. Press `Ctrl+C` to stop.
+Press `Ctrl+C` to stop.
 
 **Alternative: Manual Startup**
 
-If you prefer to control servers separately:
-
-**Terminal 1 - Backend:**
-
 ```bash
+# Terminal 1: Backend
 cd backend
 php -S localhost:3001 -t public
-```
 
-**Terminal 2 - Frontend:**
-
-```bash
+# Terminal 2: Frontend
 cd frontend
 php -S localhost:3000
 ```
 
-### Step 4: Access the Application
+### Step 5: Access the Application
 
-Open your browser to:
-
-```
-http://localhost:3000
-```
-
-## Configuration
-
-### Database Configuration
-
-Edit `backend/.env`:
-
-```env
-# SQLite (default, no setup needed)
-DB_TYPE=sqlite
-SQLITE_PATH=./database/database.sqlite
-
-# OR MySQL
-DB_TYPE=mysql
-DB_HOST=localhost
-DB_NAME=ecommerce
-DB_USER=root
-DB_PASS=your_password
-```
-
-### API Configuration
-
-Frontend API configuration is in `frontend/config/app.php` and already points to:
-
-```
-http://localhost:3001/api
-```
-
-No additional configuration needed for local development.
+Open your browser to: `http://localhost:3000`
 
 ## Testing
 
@@ -210,57 +181,56 @@ brew upgrade php
 
 ### Database Errors
 
-**Error:** `SQLSTATE[HY000]`
+**Error:** `SQLSTATE[HY000]` or `Unable to open database file`
 
 **Solution:** Rebuild database
 
 ```bash
-# Reset SQLite
-rm backend/database/database.sqlite
-php backend/setup.php
-php backend/seeder.php
+# Reset database (drop all tables + recreate + seed)
+php setup.php --reset --seed
+
+# Or just recreate schema
+php setup.php
 ```
 
 ## Project Structure Details
 
 ```
-backend/
-php reset-database.php
-```
-
-Or manually:
-
-```bash
-rm backend/database/database.sqlite
-php setup
-│   ├── DatabaseAdapter.php        # Database interface (adapter pattern)
-│   ├── MySQLDatabase.php          # MySQL adapter
-│   ├── SQLiteDatabase.php         # SQLite adapter
-│   ├── Database.php               # Singleton factory for DB adapters
-│   ├── User.php                   # User model with auth methods
-│   ├── Product.php                # Product model
-│   ├── Order.php                  # Order model
-│   └── Coupon.php                 # Coupon model
-├── database/
-│   └── database.sqlite            # SQLite database file
-├── .env                           # Configuration (git-ignored)
-├── .env.example                   # Example configuration
-├── setup.php                      # Database schema initialization
-└── seeder.php                     # Test data seeding
-
-frontend/
-├── config/
-│   └── app.php                    # API configuration
-├── controllers/                   # Page controllers
-├── models/
-│   ├── ApiClient.php              # API communication wrapper
-│   └── [Model files]
-├── views/                         # Page templates
-├── public/
-│   ├── js/                        # JavaScript (app.js + page-specific)
-│   └── css/                       # Stylesheets
-├── index.php                      # Frontend router
-└── api.php                        # API proxy for logout/session
+jquerynativePHPapi/
+├── setup.php                      # Database setup (root level)
+│                                  #   php setup.php              (schema only)
+│                                  #   php setup.php --seed       (schema + test data)
+│                                  #   php setup.php --reset      (drop all + recreate)
+│                                  #   php setup.php --reset --seed (drop + recreate + seed)
+├── start.php                      # Start both servers (Mac/Linux/Windows)
+├── backend/                       # REST API
+│   ├── public/
+│   │   └── api/
+│   │       └── index.php          # Main API router
+│   ├── classes/
+│   │   ├── DatabaseAdapter.php    # Database interface (adapter pattern)
+│   │   ├── MySQLDatabase.php      # MySQL adapter
+│   │   ├── SQLiteDatabase.php     # SQLite adapter
+│   │   ├── Database.php           # Singleton factory for DB adapters
+│   │   ├── User.php               # User model
+│   │   ├── Product.php            # Product model
+│   │   ├── Order.php              # Order model
+│   │   └── Coupon.php             # Coupon model
+│   ├── database/                  # Database files
+│   │   └── database.sqlite        # SQLite database (created by setup.php)
+│   ├── seeder.php                 # Test data seeding (called by setup.php --seed)
+│   ├── .env                       # Configuration (git-ignored)
+│   └── .env.example               # Example configuration
+├── frontend/                      # PHP MVC Application
+│   ├── config/app.php             # API configuration
+│   ├── controllers/               # Page controllers
+│   ├── models/                    # Business logic
+│   ├── views/                     # HTML templates
+│   ├── public/
+│   │   ├── js/                    # JavaScript
+│   │   └── css/                   # Stylesheets
+│   ├── index.php                  # Frontend router
+│   └── api.php                    # API proxy for sessions
 ```
 
 ## Development Workflow
@@ -299,7 +269,6 @@ frontend/
 
 ### Code Style
 
-- Follow PSR-12 PHP coding standard
 - Use 4 spaces for indentation
 - Meaningful variable names
 - Document complex logic with comments
@@ -324,36 +293,6 @@ frontend/
 - Use CDN for static files (images, CSS, JS)
 - Enable HTTPS with valid SSL certificate
 
-## Security Checklist
-
-- [ ] `.env` file in `.gitignore`
-- [ ] Database credentials not in code
-- [ ] All SQL queries parameterized
-- [ ] Input validation on all endpoints
-- [ ] CORS restricted to trusted origins
-- [ ] Error messages don't expose system details
-- [ ] Passwords hashed with bcrypt
-- [ ] HTTPS enabled in production
-- [ ] Rate limiting implemented
-- [ ] SQL injection tests passed
-
-## Deployment
-
-### Quick Deploy (for testing)
-
-```bash
-# Build production bundle
-composer install --no-dev
-
-# Deploy to server
-rsync -az --delete backend/ user@server:/var/www/api/
-rsync -az --delete frontend/ user@server:/var/www/frontend/
-```
-
-### Docker Deployment
-
-See `Dockerfile` for containerized deployment.
-
 ## Next Steps
 
 1. **Run the tests:** Follow the Testing section above
@@ -375,32 +314,6 @@ See `Dockerfile` for containerized deployment.
 # Look for error messages and stack traces there
 ```
 
-### Debug Mode
-
-Add to backend `.env`:
-
-```env
-DEBUG=true
-```
-
-Then check error output in PHP server terminal.
-
-### Test Database
-
-```bash
-# Open SQLite shell
-sqlite3 backend/database/database.sqlite
-
-# List tables
-.tables
-
-# Query coupons
-SELECT * FROM coupons;
-
-# Exit
-.quit
-```
-
 ## Support Resources
 
 - [PHP Documentation](https://www.php.net/docs.php)
@@ -416,7 +329,3 @@ To improve this project:
 2. Update documentation
 3. Follow code style guidelines
 4. Submit improvements
-
-## License
-
-MIT License - Free to use for portfolio and interview preparation.

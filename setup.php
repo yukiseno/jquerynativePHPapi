@@ -4,13 +4,16 @@
  * Database setup script for jQuery Native PHP API
  * 
  * Usage:
- *   php setup.php           # Creates schema only
- *   php setup.php --seed    # Creates schema + seeds test data
+ *   php setup.php                    # Create schema only (safe, no data loss)
+ *   php setup.php --seed             # Create schema + seed test data
+ *   php setup.php --reset            # Drop all tables + recreate schema
+ *   php setup.php --reset --seed     # Drop all + recreate + seed test data
  */
 
 require_once __DIR__ . '/backend/classes/Database.php';
 
-// Check for --seed flag
+// Check for flags
+$shouldReset = in_array('--reset', $argv);
 $shouldSeed = in_array('--seed', $argv);
 
 // Load .env file to check DB_TYPE
@@ -37,11 +40,56 @@ if ($dbType === 'mysql') {
         $pdo = new PDO("mysql:host=$host", $user, $pass);
         $pdo->exec("CREATE DATABASE IF NOT EXISTS `$dbname`");
         echo "✓ Database '$dbname' created or already exists\n";
+
+        // Select the database for subsequent operations
+        $pdo->exec("USE `$dbname`");
     } catch (Exception $e) {
         echo "Error creating database: " . $e->getMessage() . "\n";
         exit(1);
     }
 }
+
+// Handle --reset flag: drop all tables first
+if ($shouldReset) {
+    echo "🔄 Resetting database...\n";
+
+    if ($dbType === 'mysql') {
+        // Use existing $pdo connection to drop tables
+        $tables = ['order_items', 'orders', 'personal_access_tokens', 'product_size', 'color_product', 'coupons', 'sizes', 'colors', 'products', 'users'];
+
+        foreach ($tables as $table) {
+            $pdo->exec("DROP TABLE IF EXISTS `$table`");
+            echo "  ✓ Dropped table: $table\n";
+        }
+    } else {
+        // For SQLite, delete the database file
+        $dbPath = getenv('SQLITE_PATH') ?: 'database/database.sqlite';
+
+        // Resolve relative paths relative to backend directory
+        $isAbsolute = (strpos($dbPath, '/') === 0) || (strlen($dbPath) > 1 && $dbPath[1] === ':');
+        if (!$isAbsolute) {
+            $dbPath = __DIR__ . '/backend/' . ltrim($dbPath, '/\\.');
+        }
+
+        if (file_exists($dbPath)) {
+            if (unlink($dbPath)) {
+                echo "  ✓ Deleted SQLite database\n";
+            } else {
+                echo "  ✗ Failed to delete database\n";
+                exit(1);
+            }
+        }
+
+        // Recreate database directory
+        $dbDir = dirname($dbPath);
+        if (!is_dir($dbDir)) {
+            mkdir($dbDir, 0755, true);
+        }
+    }
+
+    echo "✓ Database reset complete\n\n";
+}
+
 
 $db = Database::getInstance();
 
