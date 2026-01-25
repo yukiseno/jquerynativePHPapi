@@ -318,7 +318,7 @@ try {
 
     // Now run seeder
     echo "\n\nRunning seeder...\n";
-    require_once __DIR__ . '/seeder.php';
+    require_once __DIR__ . '/backend/seeder.php';
 } catch (Exception $e) {
     echo json_encode([
         'success' => false,
