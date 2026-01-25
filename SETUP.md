@@ -12,7 +12,7 @@
 ### Step 1: Clone/Download Project
 
 ```bash
-git clone <repository-url>
+git clone https://github.com/yukiseno/jquerynativePHPapi.git
 cd jquerynativePHPapi
 ```
 
@@ -30,66 +30,48 @@ nano .env  # or use your preferred editor
 
 ### Step 2b: Initialize Database
 
-**For SQLite (default):**
+From the project root directory:
 
 ```bash
-# Creates database/database.sqlite and initializes schema
 php setup.php
-
-# Seeds test data
-php seeder.php
 ```
 
-**For MySQL:**
+This works for both **SQLite (default)** and **MySQL**. For MySQL, create your database first, then run the command above.
 
-Create your MySQL database first, then:
+### Step 3: Start Both Servers
+
+**Recommended (One Command):**
 
 ```bash
-php setup.php    # Creates tables
-php seeder.php   # Seeds test data
+php start.php
 ```
 
-### Step 3: Start Backend Server
+This automatically starts both servers:
 
-**Option A: PHP Built-in Server (Recommended for Development)**
+- **Backend API:** http://localhost:3001
+- **Frontend:** http://localhost:3000
+
+The script detects your OS (Mac, Linux, Windows) and handles startup automatically. Press `Ctrl+C` to stop.
+
+**Alternative: Manual Startup**
+
+If you prefer to control servers separately:
+
+**Terminal 1 - Backend:**
 
 ```bash
 cd backend
 php -S localhost:3001 -t public
 ```
 
-You should see:
-
-```
-PHP 8.4.13 Development Server (http://localhost:3001) started
-```
-
-Backend API is now accessible at: `http://localhost:3001/api`
-
-**Option B: Apache/Nginx (Production)**
-
-Configure your web server to point to the `backend/public` directory and route all requests through `api/index.php`.
-
-### Step 4: Start Frontend Server
-
-In a new terminal:
+**Terminal 2 - Frontend:**
 
 ```bash
 cd frontend
-
-# Using http-server (Node.js - recommended)
-npx http-server -p 3000
-
-# Or Python 3
-python3 -m http.server 3000
-
-# Or Python 2
-python -m SimpleHTTPServer 3000
+php -S localhost:3000
 ```
 
-You should see output indicating the server is running on port 3000.
-
-### Step 5: Access the Application
+### Step 4: Access the Application
 
 Open your browser to:
 
@@ -243,10 +225,14 @@ php backend/seeder.php
 
 ```
 backend/
-├── public/
-│   └── api/
-│       └── index.php              # Main API router - handles all requests
-├── classes/
+php reset-database.php
+```
+
+Or manually:
+
+```bash
+rm backend/database/database.sqlite
+php setup
 │   ├── DatabaseAdapter.php        # Database interface (adapter pattern)
 │   ├── MySQLDatabase.php          # MySQL adapter
 │   ├── SQLiteDatabase.php         # SQLite adapter

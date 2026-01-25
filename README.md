@@ -54,7 +54,6 @@ jquerynativePHPapi/
 │   ├── middleware.php          # Response helpers (apiSuccess, apiError)
 │   ├── database/                # Database files directory
 │   │   └── database.sqlite     # SQLite database (created by setup.php)
-│   ├── setup.php               # Initialize database schema
 │   ├── seeder.php              # Add test data
 │   ├── .env.example            # Example config (copy to .env)
 │   └── .gitignore              # Ignores .env and database.sqlite
@@ -100,7 +99,9 @@ jquerynativePHPapi/
 │   ├── api.php                 # PHP session AJAX handler
 │   └── ...
 │
+├── setup.php                   # Initialize database schema
 ├── start.php                   # Start both servers (cross-platform)
+├── reset-database.php          # Reset database
 ├── README.md
 └── ...
 ```
@@ -114,9 +115,7 @@ git clone https://github.com/yukiseno/jquerynativePHPapi.git
 cd jquerynativePHPapi
 
 # Create database and seed data
-cd backend
 php setup.php
-cd ..
 ```
 
 ### 2. Start Both Servers

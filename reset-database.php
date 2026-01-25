@@ -82,7 +82,7 @@ if ($dbType === 'mysql') {
 }
 
 // Run setup script to create tables and seed data
-require_once __DIR__ . '/backend/setup.php';
+require_once __DIR__ . '/setup.php';
 
 echo "\n✓ Database reset complete!\n";
 echo "✓ Tables created with fresh test data\n";

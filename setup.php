@@ -1,10 +1,10 @@
 <?php
 
 // Database setup script for jQuery Native PHP API
-require_once __DIR__ . '/classes/Database.php';
+require_once __DIR__ . '/backend/classes/Database.php';
 
 // Load .env file to check DB_TYPE
-$envFile = __DIR__ . '/.env';
+$envFile = __DIR__ . '/backend/.env';
 $dbType = 'sqlite';
 if (file_exists($envFile)) {
     $lines = file($envFile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
@@ -110,10 +110,11 @@ try {
         $db->exec('
             CREATE TABLE IF NOT EXISTS color_product (
                 id INT AUTO_INCREMENT PRIMARY KEY,
-                color_id INT NOT NULL,
                 product_id INT NOT NULL,
-                FOREIGN KEY (color_id) REFERENCES colors(id) ON DELETE CASCADE,
-                FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE
+                color_id INT NOT NULL,
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE,
+                FOREIGN KEY (color_id) REFERENCES colors(id) ON DELETE CASCADE
             )
         ');
 
@@ -122,6 +123,7 @@ try {
                 id INT AUTO_INCREMENT PRIMARY KEY,
                 product_id INT NOT NULL,
                 size_id INT NOT NULL,
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
                 FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE,
                 FOREIGN KEY (size_id) REFERENCES sizes(id) ON DELETE CASCADE
             )
@@ -130,9 +132,11 @@ try {
         $db->exec('
             CREATE TABLE IF NOT EXISTS coupons (
                 id INT AUTO_INCREMENT PRIMARY KEY,
-                name VARCHAR(255) NOT NULL UNIQUE,
+                code VARCHAR(255) NOT NULL UNIQUE,
                 discount INT NOT NULL,
-                valid_until DATE,
+                usage_limit INT DEFAULT 999999,
+                times_used INT DEFAULT 0,
+                expires_at DATETIME,
                 created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
                 updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
             )
@@ -142,12 +146,11 @@ try {
             CREATE TABLE IF NOT EXISTS orders (
                 id INT AUTO_INCREMENT PRIMARY KEY,
                 user_id INT NOT NULL,
-                coupon_id INT,
-                subtotal INT NOT NULL,
-                discount_total INT DEFAULT 0,
+                status VARCHAR(255) DEFAULT "pending",
                 total INT NOT NULL,
-                status VARCHAR(50) DEFAULT "pending",
-                payment_intent_id VARCHAR(255) UNIQUE,
+                coupon_id INT,
+                discount INT DEFAULT 0,
+                notes TEXT,
                 created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
                 updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
                 FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
@@ -159,22 +162,16 @@ try {
             CREATE TABLE IF NOT EXISTS order_items (
                 id INT AUTO_INCREMENT PRIMARY KEY,
                 order_id INT NOT NULL,
-                product_id INT,
-                product_name VARCHAR(255),
-                color_id INT,
-                color_name VARCHAR(255),
-                size_id INT,
-                size_name VARCHAR(255),
-                qty INT,
-                price INT,
-                subtotal INT,
+                product_id INT NOT NULL,
+                quantity INT NOT NULL,
+                price INT NOT NULL,
                 created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-                updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-                FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE
+                FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE,
+                FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE
             )
         ');
     } else {
-        // SQLite syntax
+        // SQLite compatible syntax
         $db->exec('
             CREATE TABLE IF NOT EXISTS users (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -246,10 +243,11 @@ try {
         $db->exec('
             CREATE TABLE IF NOT EXISTS color_product (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
-                color_id INTEGER NOT NULL,
                 product_id INTEGER NOT NULL,
-                FOREIGN KEY (color_id) REFERENCES colors(id) ON DELETE CASCADE,
-                FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE
+                color_id INTEGER NOT NULL,
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE,
+                FOREIGN KEY (color_id) REFERENCES colors(id) ON DELETE CASCADE
             )
         ');
 
@@ -258,6 +256,7 @@ try {
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 product_id INTEGER NOT NULL,
                 size_id INTEGER NOT NULL,
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
                 FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE,
                 FOREIGN KEY (size_id) REFERENCES sizes(id) ON DELETE CASCADE
             )
@@ -266,9 +265,11 @@ try {
         $db->exec('
             CREATE TABLE IF NOT EXISTS coupons (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
-                name TEXT NOT NULL UNIQUE,
+                code TEXT NOT NULL UNIQUE,
                 discount INTEGER NOT NULL,
-                valid_until TEXT,
+                usage_limit INTEGER DEFAULT 999999,
+                times_used INTEGER DEFAULT 0,
+                expires_at DATETIME,
                 created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
                 updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
             )
@@ -278,12 +279,11 @@ try {
             CREATE TABLE IF NOT EXISTS orders (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 user_id INTEGER NOT NULL,
-                coupon_id INTEGER,
-                subtotal INTEGER NOT NULL,
-                discount_total INTEGER DEFAULT 0,
-                total INTEGER NOT NULL,
                 status TEXT DEFAULT "pending",
-                payment_intent_id TEXT UNIQUE,
+                total INTEGER NOT NULL,
+                coupon_id INTEGER,
+                discount INTEGER DEFAULT 0,
+                notes TEXT,
                 created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
                 updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
                 FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
@@ -295,33 +295,19 @@ try {
             CREATE TABLE IF NOT EXISTS order_items (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 order_id INTEGER NOT NULL,
-                product_id INTEGER,
-                product_name TEXT,
-                color_id INTEGER,
-                color_name TEXT,
-                size_id INTEGER,
-                size_name TEXT,
-                qty INTEGER,
-                price INTEGER,
-                subtotal INTEGER,
+                product_id INTEGER NOT NULL,
+                quantity INTEGER NOT NULL,
+                price INTEGER NOT NULL,
                 created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-                updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-                FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE
+                FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE,
+                FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE
             )
         ');
     }
 
-    echo json_encode([
-        'success' => true,
-        'message' => 'Database tables created successfully'
-    ]);
-
-    // Now run seeder
-    echo "\n\nRunning seeder...\n";
-    require_once __DIR__ . '/seeder.php';
+    echo "✓ Tables created successfully\n";
+    require_once __DIR__ . '/backend/seeder.php';
 } catch (Exception $e) {
-    echo json_encode([
-        'success' => false,
-        'message' => 'Error: ' . $e->getMessage()
-    ]);
+    echo "Error creating tables: " . $e->getMessage() . "\n";
+    exit(1);
 }
