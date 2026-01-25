@@ -193,95 +193,12 @@ php setup.php --reset --seed
 php setup.php
 ```
 
-## Project Structure Details
-
-```
-jquerynativePHPapi/
-├── setup.php                      # Database setup (root level)
-│                                  #   php setup.php              (schema only)
-│                                  #   php setup.php --seed       (schema + test data)
-│                                  #   php setup.php --reset      (drop all + recreate)
-│                                  #   php setup.php --reset --seed (drop + recreate + seed)
-├── start.php                      # Start both servers (Mac/Linux/Windows)
-├── backend/                       # REST API
-│   ├── public/
-│   │   └── api/
-│   │       └── index.php          # Main API router
-│   ├── classes/
-│   │   ├── DatabaseAdapter.php    # Database interface (adapter pattern)
-│   │   ├── MySQLDatabase.php      # MySQL adapter
-│   │   ├── SQLiteDatabase.php     # SQLite adapter
-│   │   ├── Database.php           # Singleton factory for DB adapters
-│   │   ├── User.php               # User model
-│   │   ├── Product.php            # Product model
-│   │   ├── Order.php              # Order model
-│   │   └── Coupon.php             # Coupon model
-│   ├── database/                  # Database files
-│   │   └── database.sqlite        # SQLite database (created by setup.php)
-│   ├── seeder.php                 # Test data seeding (called by setup.php --seed)
-│   ├── .env                       # Configuration (git-ignored)
-│   └── .env.example               # Example configuration
-├── frontend/                      # PHP MVC Application
-│   ├── config/app.php             # API configuration
-│   ├── controllers/               # Page controllers
-│   ├── models/                    # Business logic
-│   ├── views/                     # HTML templates
-│   ├── public/
-│   │   ├── js/                    # JavaScript
-│   │   └── css/                   # Stylesheets
-│   ├── index.php                  # Frontend router
-│   └── api.php                    # API proxy for sessions
-```
-
-## Development Workflow
-
-### Adding New Endpoint
-
-1. **Create Model Class** (if needed)
-
-   ```php
-   // backend/classes/MyModel.php
-   class MyModel {
-       // Model logic
-   }
-   ```
-
-2. **Add Route in API**
-
-   ```php
-   // backend/public/api/index.php
-   if ($method === 'POST' && $path === 'my/endpoint') {
-       // Handle request
-   }
-   ```
-
-3. **Test Endpoint**
-
-   ```bash
-   curl -X POST http://localhost:3001/api/my/endpoint \
-     -H "Content-Type: application/json" \
-     -d '{"key":"value"}'
-   ```
-
-4. **Update Documentation**
-   - Add endpoint to API_DOCS.md
-   - Update ARCHITECTURE.md if design changes
-
-### Code Style
-
-- Use 4 spaces for indentation
-- Meaningful variable names
-- Document complex logic with comments
-- Use parameterized queries for DB access
-
 ## Performance Tips
 
 ### Development
 
 - Use PHP built-in server for quick iteration (php -S localhost:3001 -t public in backend folder)
-- Enable error reporting in .env: `DEBUG=true`
 - Monitor PHP server logs in terminal where server is running
-- Use SQLite for development (default DB_TYPE=sqlite)
 
 ### Production
 
@@ -310,12 +227,3 @@ jquerynativePHPapi/
 - [PDO Tutorial](https://www.php.net/manual/en/book.pdo.php)
 - [REST API Best Practices](https://restfulapi.net/)
 - [SQLite Documentation](https://www.sqlite.org/docs.html)
-
-## Contributing
-
-To improve this project:
-
-1. Test changes locally
-2. Update documentation
-3. Follow code style guidelines
-4. Submit improvements
