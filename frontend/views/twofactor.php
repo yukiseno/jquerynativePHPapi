@@ -67,7 +67,7 @@
                                     placeholder="000000" maxlength="6" pattern="[0-9]{6}" inputmode="numeric">
                             </div>
 
-                            <button class="btn btn-success btn-block" id="enableTwoFactorBtn">
+                            <button class="btn btn-success btn-block mt-3" id="enableTwoFactorBtn">
                                 Enable 2FA
                             </button>
                         </div>
