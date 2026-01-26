@@ -182,7 +182,7 @@ XS, S, M, L, XL, XXL
 
 - Bearer token-based API authentication (database-backed)
 - PHP session-based frontend authentication
-- **Two-Factor Authentication (2FA)** - TOTP-based (RFC 6238 compliant)
+- Two-Factor Authentication (2FA) - TOTP-based (RFC 6238 compliant)
 - Parameterized SQL queries (prevent SQL injection)
 - Bcrypt password hashing
 - Input validation and sanitization
@@ -299,16 +299,10 @@ This project demonstrates:
 
 Created by [Yuki Seno](https://github.com/yukiseno)
 
-````
-
-**Test Coupons:**
-
-- `WELCOME10` - 10% discount (valid for 1 month)
-- `SUMMER20` - 20% discount (valid for 2 months)
-
 ## Configuration
 
 Edit `.env` to configure:
+
 ```env
 DB_TYPE=sqlite                                          # sqlite or mysql
 SQLITE_PATH=/path/to/database.sqlite                   # SQLite path
@@ -317,7 +311,7 @@ DB_NAME=ecommerce                                      # MySQL database
 DB_USER=root                                           # MySQL user
 DB_PASS=                                               # MySQL password
 API_URL=http://localhost:3001                          # API base URL
-````
+```
 
 ## Design Decisions
 
