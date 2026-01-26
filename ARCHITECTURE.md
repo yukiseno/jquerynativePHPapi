@@ -11,28 +11,27 @@ This is a **native PHP e-commerce API** demonstrating professional architecture 
 - **Security by Default** - Parameterized queries, input validation, proper error handling
 - **Database Agnostic** - Switch from SQLite to MySQL without code changes
 - **Extensibility** - New endpoints and features are straightforward to add
-- **Production Ready** - Proper error handling, configuration management, HTTP semantics
 
 ## System Architecture
 
 ```
 ┌─────────────────────────────────────────────────────────┐
-│                   Frontend (jQuery)                      │
+│                   Frontend (jQuery)                     │
 │           (HTML/CSS/JavaScript - Port 3000)             │
 └────────────────────┬────────────────────────────────────┘
                      │
                      │ HTTP/JSON
                      │
 ┌────────────────────▼────────────────────────────────────┐
-│                  API Gateway                             │
+│                  API Gateway                            │
 │      (backend/public/api/index.php - Port 3001)         │
-│                                                          │
-│  ┌────────────────────────────────────────────────┐   │
-│  │  Router: Parse request path → Handler        │   │
-│  │  Auth: Validate Bearer tokens               │   │
-│  │  CORS: Enable cross-origin requests         │   │
-│  └────────────────────────────────────────────────┘   │
-└─────────────────────┬──────────────────────────────────┘
+│                                                         │
+│  ┌────────────────────────────────────────────────┐     │
+│  │  Router: Parse request path → Handler          │     │
+│  │  Auth: Validate Bearer tokens                  │     │
+│  │  CORS: Enable cross-origin requests            │     │
+│  └────────────────────────────────────────────────┘     │
+└─────────────────────┬───────────────────────────────────┘
                       │
         ┌─────────────┼─────────────┐
         │             │             │
@@ -61,12 +60,10 @@ This is a **native PHP e-commerce API** demonstrating professional architecture 
     │  - Prepared statements               │
     └──────────────┬───────────────────────┘
                    │
-        ┌──────────┴──────────┐
-        ▼                     ▼
-    ┌─────────────┐  ┌─────────────────┐
-    │ SQLite      │  │ MySQL           │
-    │ (Local Dev) │  │ (Production)    │
-    └─────────────┘  └─────────────────┘
+                   ▼
+    ┌──────────────────────────────────────┐
+    │ SQLite or MySQL                      │
+    └──────────────────────────────────────┘
 ```
 
 ## Request Flow
@@ -74,10 +71,12 @@ This is a **native PHP e-commerce API** demonstrating professional architecture 
 ### 1. Request Arrives
 
 ```
-POST /backend/public/api/index.php?route=user/login
+POST /api/apply/coupon HTTP/1.1
+Host: localhost:3001
 Content-Type: application/json
 Authorization: Bearer {token}
-{"email": "user@example.com", "password": "password123"}
+
+{"coupon_code": "WELCOME10"}
 ```
 
 ### 2. API Router (index.php)
@@ -85,12 +84,13 @@ Authorization: Bearer {token}
 ```php
 // Parse request
 $method = $_SERVER['REQUEST_METHOD'];           // POST
-$route = $_GET['route'] ?? '';                 // user/login
-$body = getJsonBody();                         // {"email": "...", "password": "..."}
+$path = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
+$path = preg_replace('/^\/api/', '', $path);   // Remove /api prefix
+$path = trim($path, '/');                      // coupon/apply
 
 // Route to handler
-if ($method === 'POST' && $route === 'user/login') {
-    // Handle user login
+if ($method === 'POST' && $path === 'apply/coupon') {
+    // Handle coupon application
 }
 ```
 
@@ -100,46 +100,63 @@ if ($method === 'POST' && $route === 'user/login') {
 // Extract parameters
 $couponCode = $body['coupon_code'];
 
-// Use model to fetch data
-$couponObj = new Coupon();
-$coupon = $couponObj->findByName($couponCode);
+// Validate input
+if (!$couponCode) {
+    apiError('Coupon code is required', HTTP_BAD_REQUEST);
+}
 
-// Validate
-if (!$coupon || !$coupon->isValid()) {
+// Use model to fetch data
+$coupon = new Coupon();
+$result = $coupon->findByName($couponCode);
+
+// Validate coupon
+if (!$result || !$result->isValid()) {
     apiError("Invalid or expired coupon", HTTP_BAD_REQUEST);
 }
 
 // Return result
-apiSuccess($coupon->toApiArray(), 'Coupon applied successfully', HTTP_OK);
+apiSuccess($result->toApiArray(), 'Coupon applied successfully', HTTP_OK);
 ```
 
 ### 4. Model Layer (Coupon.php)
 
 ```php
-class Coupon {
+class Coupon
+{
     private $db;
     private $data = [];
 
-    public function __construct($data = []) {
+    public function __construct($data = [])
+    {
         $this->db = Database::getInstance();  // Initialize once
         $this->data = $data;
     }
 
-    public function findByName($name) {
+    public function findByName($name)
+    {
         // Parameterized query (prevents SQL injection)
-        $stmt = $this->db->prepare(
-            "SELECT * FROM coupons WHERE UPPER(name) = UPPER(?)"
-        );
+        $stmt = $this->db->prepare("SELECT * FROM coupons WHERE UPPER(name) = UPPER(?)");
         $stmt->execute([$name]);
-
-        // Return Coupon object
         $result = $stmt->fetch(PDO::FETCH_ASSOC);
-        return $result ? new self($result) : null;
+
+        if ($result) {
+            return new self($result);
+        }
+
+        return null;
     }
 
-    public function isValid() {
+    public function isValid()
+    {
+        if (empty($this->data['valid_until'])) {
+            return false;
+        }
+
         // Business logic: check if not expired
-        return strtotime($this->data['valid_until']) > time();
+        $validUntil = strtotime($this->data['valid_until']);
+        $now = time();
+
+        return $validUntil > $now;
     }
 }
 ```
@@ -147,12 +164,48 @@ class Coupon {
 ### 5. Database Layer (Database.php)
 
 ```php
-// Singleton pattern ensures single connection
-$database = Database::getInstance();
+class Database
+{
+    private static $instance = null;
+    private $adapter;
 
-// PDO abstraction works with SQLite or MySQL
-$connection = new PDO('sqlite:database.sqlite');
+    private function __construct()
+    {
+        // Load .env file
+        $dbType = getenv('DB_TYPE') ?: 'sqlite';
+
+        if ($dbType === 'sqlite') {
+            $dbPath = getenv('SQLITE_PATH') ?: 'database/database.sqlite';
+            $connection = new PDO('sqlite:' . $dbPath);
+            $this->adapter = new SQLiteDatabase($connection);
+        } else {
+            // MySQL configuration
+            $connection = new PDO(
+                "mysql:host=" . getenv('DB_HOST') . ";dbname=" . getenv('DB_NAME'),
+                getenv('DB_USER'),
+                getenv('DB_PASS')
+            );
+            $this->adapter = new MySQLDatabase($connection);
+        }
+    }
+
+    // Singleton: ensures only one connection instance
+    public static function getInstance()
+    {
+        if (self::$instance === null) {
+            self::$instance = new self();
+        }
+        return self::$instance->adapter;
+    }
+}
 ```
+
+**Key Points:**
+
+- Singleton pattern: `getInstance()` returns the same adapter instance every time
+- Adapter abstraction: Automatically uses SQLite or MySQL based on `.env` configuration
+- Private constructor: Prevents direct instantiation (`new Database()` not allowed)
+- Returns adapter, not PDO: Clients use adapter methods, not raw PDO
 
 ### 6. Response
 
@@ -162,9 +215,9 @@ $connection = new PDO('sqlite:database.sqlite');
   "message": "Coupon applied successfully",
   "data": {
     "id": 1,
-    "name": "WELCOME10",
+    "code": "WELCOME10",
     "discount_amount": 10,
-    "valid_until": "2026-02-07"
+    "valid_until": "2026-12-31"
   }
 }
 ```
@@ -298,7 +351,7 @@ if ($method === 'POST' && $path === 'apply/coupon') {
 ### Coupon Application
 
 ```
-Frontend (checkout.html)
+Frontend
     │
     ├─ User clicks "Apply Coupon"
     ├─ AJAX POST /api/apply/coupon
@@ -426,22 +479,6 @@ Backend logs full error details (not sent to client for security).
 - **Connection:** Persistent via Singleton
 - **Response Time:** < 100ms for coupon queries
 
-### Future Optimizations
-
-```
-Query caching
-    └─ Cache coupon validity checks
-
-Database indexing
-    └─ Index on coupons.name for faster lookups
-
-Load balancing
-    └─ Multiple PHP processes
-
-Microservices
-    └─ Separate auth, product, order services
-```
-
 ## Testing
 
 ### Manual Testing with cURL
@@ -522,14 +559,6 @@ if ($method === 'GET' && $route === 'products') {
 - Order creation with address
 - Coupon application
 - Order history
-
-### ✅ Production-Ready
-
-- Error handling with proper HTTP status codes
-- Input validation
-- Parameterized queries (SQL injection prevention)
-- CORS headers
-- Clean API responses
 
 ## Switching Between SQLite and MySQL
 
@@ -689,54 +718,6 @@ CREATE TABLE product_size (
 # Database
 DB_TYPE=sqlite
 SQLITE_PATH=./database/database.sqlite
-
-# API
-API_URL=http://localhost:3001
-
-# Security
-# Note: Bearer tokens stored in personal_access_tokens database table
-CORS_ALLOWED=*
-```
-
-### Configuration Loading
-
-```php
-// Load .env file
-foreach (explode("\n", file_get_contents('.env')) as $line) {
-    if (strpos($line, '=') !== false && strpos($line, '#') !== 0) {
-        list($key, $value) = explode('=', $line, 2);
-        putenv(trim($key) . '=' . trim($value));
-    }
-}
-
-// Access config
-$dbType = getenv('DB_TYPE');
-```
-
-## Deployment Architecture
-
-### Development
-
-```
-localhost:3000 (Frontend)
-    ↓
-localhost:3001 (PHP Server)
-    ↓
-database.sqlite
-```
-
-### Production
-
-```
-CDN / Reverse Proxy
-    ↓
-Load Balancer
-    ↓
-Web Servers (Apache/Nginx)
-    ↓
-PHP-FPM Pool
-    ↓
-MySQL Cluster
 ```
 
 ## Technology Stack
@@ -753,27 +734,6 @@ MySQL Cluster
 | **API Format**     | JSON         | RFC 7159        |
 | **Transport**      | HTTP/HTTPS   | 1.1/2.0         |
 
-## Performance Metrics
-
-### Current
-
-- Request latency: < 100ms
-- Database query: < 50ms
-- JSON encoding: < 10ms
-- Throughput: ~1000 req/sec (single process)
-
-### Benchmarks
-
-```
-Test: Apply valid coupon
-Result: 200 OK in 45ms
-Memory: 2.5MB
-
-Test: Apply invalid coupon
-Result: 400 Error in 38ms
-Memory: 2.1MB
-```
-
 ## Security Checklist
 
 - ✅ Parameterized SQL queries
@@ -782,8 +742,6 @@ Memory: 2.1MB
 - ✅ Error messages don't expose system details
 - ✅ Password hashing with bcrypt (future)
 - ✅ Bearer token authentication (database-backed)
-- ✅ Rate limiting (future)
-- ✅ SSL/TLS (production)
 
 ## Monitoring & Logging
 
@@ -805,13 +763,6 @@ PHP development server logs to terminal:
 [Wed Jan 14 12:39:44 2026] 127.0.0.1:60085 [200]: POST /api/apply/coupon
 ```
 
-### Production Monitoring
-
-- Application Performance Monitoring (APM)
-- Error tracking (Sentry)
-- Log aggregation (ELK Stack)
-- Metrics collection (Prometheus)
-
 ## Design Patterns Used
 
 ### 1. **Singleton Pattern (Database.php)**
@@ -827,8 +778,6 @@ public static function getInstance()
 ```
 
 **Why:** Single database connection for the entire application, connection pooling, memory efficient.
-
-**Interview value:** "Demonstrates understanding of common design patterns and when to apply them."
 
 ### 2. **Instance Factory Methods (Coupon.php, Product.php, User.php)**
 
@@ -867,8 +816,6 @@ $result = $coupon->findByName($couponCode);
 - Follows OOP principles better than static methods
 - Cleaner API - no repeated `Database::getInstance()` calls
 
-**Interview value:** "Shows evolution from procedural to OOP patterns. Instance methods are more maintainable and testable than static factory methods. Each object is self-contained with its dependencies."
-
 ### 3. **Magic Methods (\_\_get in Coupon.php)**
 
 ```php
@@ -880,15 +827,11 @@ public function __get($name)
 
 **Why:** Flexible property access without creating individual getters, reduces boilerplate.
 
-**Interview value:** "Demonstrates advanced PHP knowledge and clean API design."
-
 ### 4. **MVC-Inspired Separation**
 
 - **Model** (Coupon, User, Product classes) - Business logic and data access
 - **View** (Frontend HTML) - User presentation
 - **Controller** (api/index.php) - Request routing and response handling
-
-**Interview value:** "Shows understanding of architectural patterns that scale."
 
 ## Security Architecture
 
@@ -964,25 +907,6 @@ $stmt->execute([$name]);  // $name never injected directly
 4. **Rate Limiting:** Add API throttling to prevent abuse
 5. **Async Processing:** Move heavy operations to background jobs
 
-**Example optimization:**
-
-```php
-// Current: Multiple queries (N+1 problem)
-$products = $db->query("SELECT * FROM products");
-foreach ($products as $product) {
-    $colors = getColors($product['id']);  // Extra query per product!
-}
-
-// Better: Single query with JOIN
-$stmt = $db->prepare("
-    SELECT p.*, GROUP_CONCAT(c.name) as colors
-    FROM products p
-    LEFT JOIN product_colors pc ON p.id = pc.product_id
-    LEFT JOIN colors c ON pc.color_id = c.id
-    GROUP BY p.id
-");
-```
-
 ## Error Handling Strategy
 
 ```
@@ -1053,7 +977,6 @@ This architecture demonstrates:
 - ✅ Security best practices (input validation, parameterized queries, bcrypt)
 - ✅ Professional design patterns (Singleton, Factory)
 - ✅ Scalable structure (easy to add features, switch databases)
-- ✅ Production-ready practices (error handling, configuration management)
 - ✅ Clear separation of concerns (models, routing, business logic)
 
 **Perfect for demonstrating mid-to-senior level PHP expertise.**

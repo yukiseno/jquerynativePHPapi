@@ -10,39 +10,18 @@ class Product
     }
 
     /**
-     * Get all products with colors and sizes - Laravel format
-     * Returns only colors and sizes that are actually used by products
+     * Get all products with colors and sizes
      */
     public function getAll()
     {
-
         $products = $this->db->query("SELECT * FROM products ORDER BY id DESC")->fetchAll(PDO::FETCH_ASSOC);
-        $productData = [];
 
-        foreach ($products as $product) {
-            $productData[] = self::formatProduct($product);
-        }
-
-        // Get only colors that are actually used by products
-        $colors = $this->db->query("
-            SELECT DISTINCT c.id, c.name, c.created_at, c.updated_at 
-            FROM colors c
-            JOIN color_product cp ON c.id = cp.color_id
-            ORDER BY c.name
-        ")->fetchAll(PDO::FETCH_ASSOC);
-
-        // Get only sizes that are actually used by products
-        $sizes = $this->db->query("
-            SELECT DISTINCT s.id, s.name, s.created_at, s.updated_at 
-            FROM sizes s
-            JOIN product_size ps ON s.id = ps.size_id
-            ORDER BY s.name
-        ")->fetchAll(PDO::FETCH_ASSOC);
+        [$productData, $allColors, $allSizes] = $this->enrichProductsWithRelations($products);
 
         return [
             'data' => $productData,
-            'colors' => $colors,
-            'sizes' => $sizes
+            'colors' => $allColors,
+            'sizes' => $allSizes
         ];
     }
 
@@ -59,18 +38,12 @@ class Product
         $stmt->execute([$colorId]);
         $products = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-        $productData = [];
-        foreach ($products as $product) {
-            $productData[] = $this->formatProduct($product);
-        }
-
-        $colors = $this->db->query("SELECT id, name, created_at, updated_at FROM colors ORDER BY name")->fetchAll(PDO::FETCH_ASSOC);
-        $sizes = $this->db->query("SELECT id, name, created_at, updated_at FROM sizes ORDER BY name")->fetchAll(PDO::FETCH_ASSOC);
+        [$productData, $allColors, $allSizes] = $this->enrichProductsWithRelations($products);
 
         return [
             'data' => $productData,
-            'colors' => $colors,
-            'sizes' => $sizes
+            'colors' => $allColors,
+            'sizes' => $allSizes
         ];
     }
 
@@ -87,18 +60,12 @@ class Product
         $stmt->execute([$sizeId]);
         $products = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-        $productData = [];
-        foreach ($products as $product) {
-            $productData[] = $this->formatProduct($product);
-        }
-
-        $colors = $this->db->query("SELECT id, name, created_at, updated_at FROM colors ORDER BY name")->fetchAll(PDO::FETCH_ASSOC);
-        $sizes = $this->db->query("SELECT id, name, created_at, updated_at FROM sizes ORDER BY name")->fetchAll(PDO::FETCH_ASSOC);
+        [$productData, $allColors, $allSizes] = $this->enrichProductsWithRelations($products);
 
         return [
             'data' => $productData,
-            'colors' => $colors,
-            'sizes' => $sizes
+            'colors' => $allColors,
+            'sizes' => $allSizes
         ];
     }
 
@@ -111,18 +78,12 @@ class Product
         $stmt->execute(['%' . $searchTerm . '%']);
         $products = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-        $productData = [];
-        foreach ($products as $product) {
-            $productData[] = $this->formatProduct($product);
-        }
-
-        $colors = $this->db->query("SELECT id, name, created_at, updated_at FROM colors ORDER BY name")->fetchAll(PDO::FETCH_ASSOC);
-        $sizes = $this->db->query("SELECT id, name, created_at, updated_at FROM sizes ORDER BY name")->fetchAll(PDO::FETCH_ASSOC);
+        [$productData, $allColors, $allSizes] = $this->enrichProductsWithRelations($products);
 
         return [
             'data' => $productData,
-            'colors' => $colors,
-            'sizes' => $sizes
+            'colors' => $allColors,
+            'sizes' => $allSizes
         ];
     }
 
@@ -139,13 +100,12 @@ class Product
             return null;
         }
 
-        $colors = $this->db->query("SELECT id, name, created_at, updated_at FROM colors ORDER BY name")->fetchAll(PDO::FETCH_ASSOC);
-        $sizes = $this->db->query("SELECT id, name, created_at, updated_at FROM sizes ORDER BY name")->fetchAll(PDO::FETCH_ASSOC);
+        [$productData, $allColors, $allSizes] = $this->enrichProductsWithRelations([$product]);
 
         return [
-            'data' => $this->formatProduct($product),
-            'colors' => $colors,
-            'sizes' => $sizes
+            'data' => $productData[0],
+            'colors' => $allColors,
+            'sizes' => $allSizes
         ];
     }
 
@@ -162,34 +122,112 @@ class Product
             return null;
         }
 
-        $colors = $this->db->query("SELECT id, name, created_at, updated_at FROM colors ORDER BY name")->fetchAll(PDO::FETCH_ASSOC);
-        $sizes = $this->db->query("SELECT id, name, created_at, updated_at FROM sizes ORDER BY name")->fetchAll(PDO::FETCH_ASSOC);
+        [$productData, $allColors, $allSizes] = $this->enrichProductsWithRelations([$product]);
 
         return [
-            'data' => $this->formatProduct($product),
-            'colors' => $colors,
-            'sizes' => $sizes
+            'data' => $productData[0],
+            'colors' => $allColors,
+            'sizes' => $allSizes
         ];
     }
 
     /**
-     * Format product with colors, sizes, and reviews
+     * Enrich products with their colors and sizes
+     * Returns [productData, allColors, allSizes]
      */
-    private function formatProduct($product)
+    private function enrichProductsWithRelations($products)
     {
-        $productId = $product['id'];
+        $productIds = array_map(fn($p) => $p['id'], $products);
+        $productColors = [];
+        $productSizes = [];
 
-        // Get colors with pivot data
-        $colorStmt = $this->db->prepare("
-            SELECT c.id, c.name, c.created_at, c.updated_at,
-                   pc.product_id, pc.color_id
+        if (!empty($productIds)) {
+            $placeholders = implode(',', $productIds);
+
+            $colorResults = $this->db->query("
+                SELECT c.id, c.name, c.created_at, c.updated_at, cp.product_id
+                FROM colors c
+                JOIN color_product cp ON c.id = cp.color_id
+                WHERE cp.product_id IN ($placeholders)
+                ORDER BY c.name
+            ")->fetchAll(PDO::FETCH_ASSOC);
+
+            $sizeResults = $this->db->query("
+                SELECT s.id, s.name, s.created_at, s.updated_at, ps.product_id
+                FROM sizes s
+                JOIN product_size ps ON s.id = ps.size_id
+                WHERE ps.product_id IN ($placeholders)
+                ORDER BY s.name
+            ")->fetchAll(PDO::FETCH_ASSOC);
+
+            foreach ($colorResults as $cr) {
+                $pid = $cr['product_id'];
+                if (!isset($productColors[$pid])) {
+                    $productColors[$pid] = [];
+                }
+                $productColors[$pid][$cr['id']] = [
+                    'id' => $cr['id'],
+                    'name' => $cr['name'],
+                    'created_at' => $cr['created_at'],
+                    'updated_at' => $cr['updated_at']
+                ];
+            }
+
+            foreach ($sizeResults as $sr) {
+                $pid = $sr['product_id'];
+                if (!isset($productSizes[$pid])) {
+                    $productSizes[$pid] = [];
+                }
+                $productSizes[$pid][$sr['id']] = [
+                    'id' => $sr['id'],
+                    'name' => $sr['name'],
+                    'created_at' => $sr['created_at'],
+                    'updated_at' => $sr['updated_at']
+                ];
+            }
+
+            foreach ($productColors as $pid => $colors) {
+                $productColors[$pid] = array_values($colors);
+            }
+            foreach ($productSizes as $pid => $sizes) {
+                $productSizes[$pid] = array_values($sizes);
+            }
+        }
+
+        $productData = [];
+        foreach ($products as $product) {
+            $pid = $product['id'];
+            $colors = $productColors[$pid] ?? [];
+            $sizes = $productSizes[$pid] ?? [];
+            $productData[] = $this->formatProduct($product, $colors, $sizes);
+        }
+
+        // Get only colors that are actually used by products
+        $allColors = $this->db->query("
+            SELECT DISTINCT c.id, c.name, c.created_at, c.updated_at 
             FROM colors c
-            JOIN color_product pc ON c.id = pc.color_id
-            WHERE pc.product_id = ?
-        ");
-        $colorStmt->execute([$productId]);
-        $colors = $colorStmt->fetchAll(PDO::FETCH_ASSOC);
+            JOIN color_product cp ON c.id = cp.color_id
+            ORDER BY c.name
+        ")->fetchAll(PDO::FETCH_ASSOC);
 
+        // Get only sizes that are actually used by products
+        $allSizes = $this->db->query("
+            SELECT DISTINCT s.id, s.name, s.created_at, s.updated_at 
+            FROM sizes s
+            JOIN product_size ps ON s.id = ps.size_id
+            ORDER BY s.name
+        ")->fetchAll(PDO::FETCH_ASSOC);
+
+        return [$productData, $allColors, $allSizes];
+    }
+
+    /**
+     * Format product with colors and sizes (no additional queries)
+     * Accepts pre-fetched colors and sizes arrays
+     */
+    private function formatProduct($product, $colors = [], $sizes = [])
+    {
+        // Format colors for this product
         $colorData = [];
         foreach ($colors as $color) {
             $colorData[] = [
@@ -197,24 +235,10 @@ class Product
                 'name' => $color['name'],
                 'created_at' => $color['created_at'],
                 'updated_at' => $color['updated_at'],
-                'pivot' => [
-                    'product_id' => $color['product_id'],
-                    'color_id' => $color['color_id']
-                ]
             ];
         }
 
-        // Get sizes with pivot data
-        $sizeStmt = $this->db->prepare("
-            SELECT s.id, s.name, s.created_at, s.updated_at,
-                   ps.product_id, ps.size_id
-            FROM sizes s
-            JOIN product_size ps ON s.id = ps.size_id
-            WHERE ps.product_id = ?
-        ");
-        $sizeStmt->execute([$productId]);
-        $sizes = $sizeStmt->fetchAll(PDO::FETCH_ASSOC);
-
+        // Format sizes for this product
         $sizeData = [];
         foreach ($sizes as $size) {
             $sizeData[] = [
@@ -222,10 +246,6 @@ class Product
                 'name' => $size['name'],
                 'created_at' => $size['created_at'],
                 'updated_at' => $size['updated_at'],
-                'pivot' => [
-                    'product_id' => $size['product_id'],
-                    'size_id' => $size['size_id']
-                ]
             ];
         }
 

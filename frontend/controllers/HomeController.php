@@ -14,8 +14,8 @@ class HomeController
         return [
             'success' => true,
             'products' => [],
-            'colors' => $productData['colors'] ?? [],
-            'sizes' => $productData['sizes'] ?? []
+            'colors' => $productData['data']['colors'] ?? [],
+            'sizes' => $productData['data']['sizes'] ?? []
         ];
     }
 }
